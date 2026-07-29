@@ -1,0 +1,30 @@
+# Diretorio de trabalho local (providers, modulos baixados, cache do backend)
+**/.terraform/*
+
+# Arquivos de state — nunca versionar, ficam no backend S3
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Planos salvos: podem conter valores sensiveis em texto claro
+*.tfplan
+plan.out
+
+# Overrides locais de desenvolvimento
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Variaveis com credenciais ou valores especificos de ambiente
+*.tfvars
+*.tfvars.json
+!example.tfvars
+
+# Config de CLI que costuma guardar credenciais
+.terraformrc
+terraform.rc
