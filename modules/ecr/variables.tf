@@ -2,7 +2,8 @@ variable "name" {
   type = string
 }
 
-variable "readonly" {
-  description = "Se true, o repositório nao permite alteracoes."
+variable "immutable_tags" {
+  description = "Se true, uma tag publicada nao pode ser sobrescrita."
+  type        = bool
   default     = false
 }

@@ -36,7 +36,7 @@ module "github_oidc" {
 
 module "shortener-ecr" {
   source = "./modules/ecr"
-  name = "${var.name}-ecr"
+  name   = "${var.name}-ecr"
 }
 
 module "iam_urlshortener" {
@@ -45,7 +45,7 @@ module "iam_urlshortener" {
   name        = "${var.name}-github-actions"
   description = "Role assumida pelo GitHub Actions de ${var.github_repository}"
 
-  trust_statements = local.github_actions_trust
+  trust_statements = local.github_actions_trust["app"]
 
   policies = {
     ecr-auth = {
@@ -66,7 +66,18 @@ module "iam_urlshortener" {
         "ecr:DescribeImages",
         "ecr:ListImages",
       ]
-      resources = [module.ecr.role_arn]
+      resources = [module.shortener-ecr.repository_arn]
     }
   }
+}
+
+module "iam_terraform" {
+  source = "./modules/iam"
+
+  name        = "${var.name}-terraform-github-actions"
+  description = "Role da pipeline de infraestrutura (${var.github_repository_terraform})"
+
+  trust_statements = local.github_actions_trust["terraform"]
+
+  managed_policy_arns = ["arn:aws:iam::aws:policy/AdministratorAccess"]
 }
