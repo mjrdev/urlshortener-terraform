@@ -23,22 +23,12 @@ variable "subnet_count" {
 }
 
 variable "github_repository_terraform" {
-  description = "Repo da pipeline de infraestrutura, formato owner/repo."
+  description = "Repo da pipeline de infraestrutura, formato owner@ownerid/repo@repoid."
   type        = string
 
   validation {
-    condition     = can(regex("^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$", var.github_repository_terraform))
-    error_message = "Use apenas owner/repo (ex.: mjrdev/urlshortener-terraform), sem o prefixo 'repo:' nem sufixo de ref."
-  }
-}
-
-variable "github_repository_terraform_id" {
-  description = "Claim repository_id do repo de infraestrutura."
-  type        = string
-
-  validation {
-    condition     = can(regex("^[0-9]+$", var.github_repository_terraform_id))
-    error_message = "github_repository_terraform_id deve conter apenas digitos."
+    condition     = can(regex("^[A-Za-z0-9_.-]+@[0-9]+/[A-Za-z0-9_.-]+@[0-9]+$", var.github_repository_terraform))
+    error_message = "Use owner@ownerid/repo@repoid (ex.: mjrdev@52384586/urlshortener-terraform@1315325139)."
   }
 }
 
@@ -48,37 +38,16 @@ variable "github_subjects_terraform" {
   default     = ["ref:refs/heads/main"]
 }
 
-# Apenas "owner/repo" — o claim `sub` completo
-# ("repo:owner/repo:<subject>") e montado em locals.tf.
+# Formato "owner@ownerid/repo@repoid" — e o que o GitHub coloca no claim
+# `sub`. O prefixo "repo:" e o sufixo da ref sao montados em locals.tf.
+# Obtenha os IDs com: curl -s https://api.github.com/repos/OWNER/REPO
 variable "github_repository" {
-  type = string
-
-  validation {
-    condition     = can(regex("^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$", var.github_repository))
-    error_message = "Use apenas owner/repo (ex.: mjrdev/url-shortener), sem o prefixo 'repo:' nem sufixo de ref."
-  }
-}
-
-# Os IDs numericos nao vivem dentro do `sub`: sao claims proprias
-# (repository_id / repository_owner_id) e sobrevivem a rename do repo.
-# Obtenha com: curl -s https://api.github.com/repos/OWNER/REPO
-variable "github_repository_id" {
-  description = "Claim repository_id — o campo .id da API do repositorio."
+  description = "Repo da aplicacao, formato owner@ownerid/repo@repoid."
   type        = string
 
   validation {
-    condition     = can(regex("^[0-9]+$", var.github_repository_id))
-    error_message = "github_repository_id deve conter apenas digitos."
-  }
-}
-
-variable "github_repository_owner_id" {
-  description = "Claim repository_owner_id — o campo .owner.id da API do repositorio."
-  type        = string
-
-  validation {
-    condition     = can(regex("^[0-9]+$", var.github_repository_owner_id))
-    error_message = "github_repository_owner_id deve conter apenas digitos."
+    condition     = can(regex("^[A-Za-z0-9_.-]+@[0-9]+/[A-Za-z0-9_.-]+@[0-9]+$", var.github_repository))
+    error_message = "Use owner@ownerid/repo@repoid (ex.: mjrdev@52384586/url-shortener@1304417157), sem o prefixo 'repo:' nem sufixo de ref."
   }
 }
 
