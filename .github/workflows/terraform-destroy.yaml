@@ -41,6 +41,10 @@ jobs:
         with:
           terraform_version: ${{ vars.TF_VERSION }}
 
+      - name: Terraform Initialize
+        id: init
+        run: terraform init
+
       - name: Terraform Plan Destroy
         id: plan
         run: terraform plan -destroy -out=tfdestroy.plan
