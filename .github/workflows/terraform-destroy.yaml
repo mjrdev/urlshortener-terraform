@@ -1,0 +1,50 @@
+name: Terraform flow
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Digite "destroy" para confirmar'
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  TF_VAR_name:                 ${{ secrets.NAME }}
+  TF_VAR_vpc_cidr:             ${{ secrets.VPC_CIDR }}
+  TF_VAR_single_nat_gateway:   ${{ secrets.SINGLE_NAT_GATEWAY }}
+  TF_VAR_subnet_count:         ${{ secrets.SUBNET_COUNT }}
+  TF_VAR_app_repository:       ${{ secrets.APP_REPOSITORY }}
+  TF_VAR_terraform_repository: ${{ secrets.TERRAFORM_REPOSITORY }}
+
+jobs:
+  destroy:
+    name: Destroy
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm == 'destroy'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ vars.TF_VERSION }}
+
+      - name: Terraform Plan Destroy
+        id: plan
+        run: terraform plan -destroy -out=tfdestroy.plan
+
+      - name: Terraform Destroy
+        id: destroy
+        run: terraform apply -auto-approve tfdestroy.plan
