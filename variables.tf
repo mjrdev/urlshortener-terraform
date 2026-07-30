@@ -22,7 +22,7 @@ variable "subnet_count" {
   default     = 3
 }
 
-variable "github_repository_terraform" {
+variable "terraform_repository" {
   description = "Repo da pipeline de infraestrutura, formato owner@ownerid/repo@repoid."
   type        = string
 
@@ -41,7 +41,7 @@ variable "github_subjects_terraform" {
 # Formato "owner@ownerid/repo@repoid" — e o que o GitHub coloca no claim
 # `sub`. O prefixo "repo:" e o sufixo da ref sao montados em locals.tf.
 # Obtenha os IDs com: curl -s https://api.github.com/repos/OWNER/REPO
-variable "github_repository" {
+variable "app_repository" {
   description = "Repo da aplicacao, formato owner@ownerid/repo@repoid."
   type        = string
 

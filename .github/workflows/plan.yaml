@@ -42,4 +42,4 @@ jobs:
 
       - name: Plan Terraform
         id: plan
-        run: terraform plan
+        run: terraform plan 

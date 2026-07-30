@@ -44,7 +44,7 @@ module "iam_urlshortener" {
    source = "./modules/iam"
 
   name        = "${var.name}-github-actions"
-  description = "Role assumida pelo GitHub Actions de ${var.github_repository}"
+  description = "Role assumida pelo GitHub Actions de ${var.app_repository}"
 
   trust_statements = local.github_actions_trust["app"]
 
@@ -76,7 +76,7 @@ module "iam_terraform" {
   source = "./modules/iam"
 
   name        = "${var.name}-terraform-github-actions"
-  description = "Role da pipeline de infraestrutura (${var.github_repository_terraform})"
+  description = "Role da pipeline de infraestrutura (${var.terraform_repository})"
 
   trust_statements = local.github_actions_trust["terraform"]
 
