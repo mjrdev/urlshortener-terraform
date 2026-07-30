@@ -73,7 +73,7 @@ module "iam_urlshortener" {
 }
 
 module "iam_terraform" {
-  source = "./modules/iam"
+  source =  "./modules/iam"
 
   name        = "${var.name}-terraform-github-actions"
   description = "Role da pipeline de infraestrutura (${var.terraform_repository})"
