@@ -25,7 +25,7 @@ variable "subnet_count" {
 variable "terraform_repository" {
   description = "Repo da pipeline de infraestrutura, formato owner@ownerid/repo@repoid."
   type        = string
-  sensitive = true
+  sensitive   = true
 }
 
 variable "github_subjects_terraform" {
@@ -37,7 +37,7 @@ variable "github_subjects_terraform" {
 variable "app_repository" {
   description = "Repo da aplicacao, formato owner@ownerid/repo@repoid."
   type        = string
-  sensitive = true
+  sensitive   = true
 }
 
 variable "github_subjects" {

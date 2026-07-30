@@ -41,7 +41,7 @@ module "shortener-ecr" {
 
 module "iam_urlshortener" {
 
-   source = "./modules/iam"
+  source = "./modules/iam"
 
   name        = "${var.name}-github-actions"
   description = "Role assumida pelo GitHub Actions de ${var.app_repository}"
@@ -73,7 +73,7 @@ module "iam_urlshortener" {
 }
 
 module "iam_terraform" {
-  source =  "./modules/iam"
+  source = "./modules/iam"
 
   name        = "${var.name}-terraform-github-actions"
   description = "Role da pipeline de infraestrutura (${var.terraform_repository})"
