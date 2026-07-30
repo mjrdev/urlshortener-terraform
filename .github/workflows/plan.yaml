@@ -38,8 +38,19 @@ jobs:
 
       - name: Terraform Initialize
         id: init
-        run: terraform init
+        run: terraform init -input=false
 
       - name: Plan Terraform
         id: plan
-        run: terraform plan 
+        # TF_VAR_<nome> e o unico jeito de o Terraform ver um secret/var do
+        # GitHub. O sufixo tem que casar com o nome da variavel, em minusculas.
+        env:
+          TF_VAR_name:                 ${{ secrets.NAME }}
+          TF_VAR_vpc_cidr:             ${{ secrets.VPC_CIDR }}
+          TF_VAR_single_nat_gateway:   ${{ secrets.SINGLE_NAT_GATEWAY }}
+          TF_VAR_subnet_count:         ${{ secrets.SUBNET_COUNT }}
+          TF_VAR_app_repository:       ${{ secrets.APP_REPOSITORY }}
+          TF_VAR_terraform_repository: ${{ secrets.TERRAFORM_REPOSITORY }}
+        # -input=false faz falhar na hora se faltar alguma variavel,
+        # em vez de travar no prompt ate o timeout do job.
+        run: terraform plan -input=false -no-color
