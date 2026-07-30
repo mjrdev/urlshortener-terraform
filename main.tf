@@ -41,7 +41,7 @@ module "shortener-ecr" {
 
 module "iam_urlshortener" {
 
-  source = "./modules/iam"
+   source = "./modules/iam"
 
   name        = "${var.name}-github-actions"
   description = "Role assumida pelo GitHub Actions de ${var.github_repository}"
