@@ -47,7 +47,11 @@ jobs:
 
       - name: Terraform Plan Destroy
         id: plan
-        run: terraform plan -destroy -out=tfdestroy.plan
+        run: |
+          terraform plan -destroy -out=tfdestroy.plan \
+            -target=module.vpc \
+            -target=module.shortener-ecr \
+            -target=module.iam_urlshortener
 
       - name: Terraform Destroy
         id: destroy
