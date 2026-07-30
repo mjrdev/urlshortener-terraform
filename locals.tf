@@ -11,11 +11,11 @@ locals {
   # para nao duplicar o bloco a cada repo novo.
   github_repos = {
     app = {
-      repository = var.github_repository
+      repository = var.app_repository
       subjects   = var.github_subjects
     }
     terraform = {
-      repository = var.github_repository_terraform
+      repository = var.terraform_repository
       subjects   = var.github_subjects_terraform
     }
   }
