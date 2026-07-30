@@ -1,29 +1,27 @@
-name: plan
+name: Terraform flow
 
 on:
-  workflow_run:
-    workflows: ["validate"]
-    types:
-      - completed
+  push:
     branches:
       - main
+    paths:
+      - '**.tf'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '**.tf'
 
 permissions:
   id-token: write
   contents: read
-  pull-requests: write
-
+  
 jobs:
-  plan:
-    if: >-
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'push'
+  validate:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
@@ -36,14 +34,21 @@ jobs:
         with:
           terraform_version: ${{ vars.TF_VERSION }}
 
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check
+        continue-on-error: true
+
       - name: Terraform Initialize
         id: init
-        run: terraform init -input=false
+        run: terraform init
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate
 
       - name: Plan Terraform
         id: plan
-        # TF_VAR_<nome> e o unico jeito de o Terraform ver um secret/var do
-        # GitHub. O sufixo tem que casar com o nome da variavel, em minusculas.
         env:
           TF_VAR_name:                 ${{ secrets.NAME }}
           TF_VAR_vpc_cidr:             ${{ secrets.VPC_CIDR }}
@@ -51,6 +56,4 @@ jobs:
           TF_VAR_subnet_count:         ${{ secrets.SUBNET_COUNT }}
           TF_VAR_app_repository:       ${{ secrets.APP_REPOSITORY }}
           TF_VAR_terraform_repository: ${{ secrets.TERRAFORM_REPOSITORY }}
-        # -input=false faz falhar na hora se faltar alguma variavel,
-        # em vez de travar no prompt ate o timeout do job.
         run: terraform plan -input=false -no-color
