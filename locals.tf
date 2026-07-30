@@ -2,7 +2,9 @@ data "aws_caller_identity" "current" {}
 
 locals {
   common_tags = {
-    Name = "url-shortener"
+    Name  = "url-shortener"
+    Owner = "mjr"
+    By    = "terraform"
   }
 
   # Um trust statement por repositorio autorizado. Indexado por apelido

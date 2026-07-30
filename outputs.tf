@@ -8,10 +8,10 @@ output "ecr_repository_url" {
   description = "URL do repositorio ECR — destino do docker push"
 }
 
-output "role_arn" {
+output "iam_urlshortener_role_arn" {
   value = module.iam_urlshortener.role_arn
 }
 
-output "ci_policy_arns" {
-  value = module.iam_urlshortener.policy_arns
+output "terraform_role_arn" {
+  value = module.iam_terraform.role_arn
 }
