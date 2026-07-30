@@ -36,7 +36,10 @@ data "aws_iam_policy_document" "assume_role" {
 # Role
 ##########################
 
+
 resource "aws_iam_role" "this" {
+  count = var.prevent_destroy ? 0 : 1
+
   name                 = var.name
   description          = var.description
   path                 = var.path
@@ -44,6 +47,28 @@ resource "aws_iam_role" "this" {
   assume_role_policy   = data.aws_iam_policy_document.assume_role.json
 
   tags = merge({ Name = var.name }, var.tags)
+}
+
+resource "aws_iam_role" "protected" {
+  count = var.prevent_destroy ? 1 : 0
+
+  name                 = var.name
+  description          = var.description
+  path                 = var.path
+  max_session_duration = var.max_session_duration
+  assume_role_policy   = data.aws_iam_policy_document.assume_role.json
+
+  tags = merge({ Name = var.name }, var.tags)
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+locals {
+  role_name      = one(concat(aws_iam_role.this[*].name, aws_iam_role.protected[*].name))
+  role_arn       = one(concat(aws_iam_role.this[*].arn, aws_iam_role.protected[*].arn))
+  role_unique_id = one(concat(aws_iam_role.this[*].unique_id, aws_iam_role.protected[*].unique_id))
 }
 
 ##########################
@@ -73,13 +98,13 @@ resource "aws_iam_policy" "this" {
 resource "aws_iam_role_policy_attachment" "this" {
   for_each = aws_iam_policy.this
 
-  role       = aws_iam_role.this.name
+  role       = local.role_name
   policy_arn = each.value.arn
 }
 
 resource "aws_iam_role_policy_attachment" "managed" {
   for_each = toset(var.managed_policy_arns)
 
-  role       = aws_iam_role.this.name
+  role       = local.role_name
   policy_arn = each.value
 }

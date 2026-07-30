@@ -32,6 +32,8 @@ module "vpc" {
 
 module "github_oidc" {
   source = "./modules/github-oidc"
+
+  prevent_destroy = true
 }
 
 module "shortener-ecr" {
@@ -81,4 +83,6 @@ module "iam_terraform" {
   trust_statements = local.github_actions_trust["terraform"]
 
   managed_policy_arns = ["arn:aws:iam::aws:policy/AdministratorAccess"]
+
+  prevent_destroy = true
 }

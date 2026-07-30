@@ -99,6 +99,21 @@ variable "managed_policy_arns" {
   default     = []
 }
 
+variable "prevent_destroy" {
+  description = <<-EOT
+    Trava a role contra destroy. Com true, qualquer plano que remova a role —
+    inclusive `terraform destroy` do stack inteiro — falha ainda no plan.
+
+    Para realmente deletar depois, mude para false, aplique, e so entao remova
+    o modulo. Alternar o valor recria a role: a que sai e a que entra sao
+    recursos diferentes no state, entao o destroy da antiga tambem esbarra na
+    trava. Trocar exige `terraform state mv` entre aws_iam_role.protected[0] e
+    aws_iam_role.this[0].
+  EOT
+  type        = bool
+  default     = false
+}
+
 variable "tags" {
   description = "Tags adicionais aplicadas na role e nas politicas."
   type        = map(string)

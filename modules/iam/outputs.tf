@@ -1,16 +1,16 @@
 output "role_arn" {
   description = "ARN da role."
-  value       = aws_iam_role.this.arn
+  value       = local.role_arn
 }
 
 output "role_name" {
   description = "Nome da role."
-  value       = aws_iam_role.this.name
+  value       = local.role_name
 }
 
 output "role_unique_id" {
   description = "ID unico da role, atribuido pela AWS."
-  value       = aws_iam_role.this.unique_id
+  value       = local.role_unique_id
 }
 
 output "assume_role_policy" {

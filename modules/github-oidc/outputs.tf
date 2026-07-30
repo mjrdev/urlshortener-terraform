@@ -1,11 +1,11 @@
 output "arn" {
   description = "ARN do provider OIDC — passar para cada modulo de role."
-  value       = aws_iam_openid_connect_provider.this.arn
+  value       = local.provider_arn
 }
 
 output "url" {
   description = "URL do provider, com esquema."
-  value       = aws_iam_openid_connect_provider.this.url
+  value       = local.provider_url
 }
 
 output "host" {
