@@ -4,12 +4,10 @@ on:
   push:
     branches:
       - main
-    paths:
-      - '**.tf'
   pull_request:
     branches:
       - main
-      
+
 permissions:
   id-token: write
   contents: read
