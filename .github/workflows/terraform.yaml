@@ -15,6 +15,13 @@ permissions:
 jobs:
   terraform:
     runs-on: ubuntu-latest
+    env:
+      TF_VAR_name:                 ${{ secrets.NAME }}
+      TF_VAR_vpc_cidr:             ${{ secrets.VPC_CIDR }}
+      TF_VAR_single_nat_gateway:   ${{ secrets.SINGLE_NAT_GATEWAY }}
+      TF_VAR_subnet_count:         ${{ secrets.SUBNET_COUNT }}
+      TF_VAR_app_repository:       ${{ secrets.APP_REPOSITORY }}
+      TF_VAR_terraform_repository: ${{ secrets.TERRAFORM_REPOSITORY }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -45,11 +52,8 @@ jobs:
 
       - name: Plan Terraform
         id: plan
-        env:
-          TF_VAR_name:                 ${{ secrets.NAME }}
-          TF_VAR_vpc_cidr:             ${{ secrets.VPC_CIDR }}
-          TF_VAR_single_nat_gateway:   ${{ secrets.SINGLE_NAT_GATEWAY }}
-          TF_VAR_subnet_count:         ${{ secrets.SUBNET_COUNT }}
-          TF_VAR_app_repository:       ${{ secrets.APP_REPOSITORY }}
-          TF_VAR_terraform_repository: ${{ secrets.TERRAFORM_REPOSITORY }}
         run: terraform plan -input=false -no-color
+
+      - name: Apply Terraform
+        id: apply
+        run: terraform apply -auto-approve
