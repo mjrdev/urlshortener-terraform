@@ -36,6 +36,10 @@ jobs:
         with:
           terraform_version: ${{ vars.TF_VERSION }}
 
+      - name: Terraform Initialize
+        id: init
+        run: terraform init
+
       - name: Plan Terraform
         id: plan
         run: terraform plan
