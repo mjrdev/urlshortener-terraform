@@ -79,9 +79,14 @@ Modulo pronto nao e infraestrutura ligada. Pergunte se ja e para instanciar. Se 
 3. Inputs que variam por ambiente viram `variable` na raiz (com `description` e default)
    e entram em `environments/*.tfvars` — **inclusive `example.tfvars`**, com comentario.
 4. Exporte na raiz so o que alguem de fora usa (`outputs.tf`, na secao certa).
-5. Se o recurso precisa de permissao para a aplicacao ou para a pipeline, acrescente a
-   policy em `module.iam_app` / `module.iam_terraform` em vez de criar IAM no modulo novo.
-6. Se o modulo deve ser destruivel, acrescente o `-target=module.<nome>` em
+5. Se a **aplicacao** precisa de permissao no recurso, acrescente a policy em
+   `module.iam_app` em vez de criar IAM no modulo novo.
+6. **Sempre** acrescente as acoes de ciclo de vida do servico em `module.iam_terraform`
+   (`iam.tf`): a role da pipeline nao tem `AdministratorAccess`, e sem isso o `apply`
+   quebra com `AccessDenied` no meio (ADR-0014). Agrupe numa policy existente do mesmo
+   dominio — o limite de 10 politicas por role ja esta no teto — e use `local.account_id`
+   nos ARNs, nunca o numero da conta literal.
+7. Se o modulo deve ser destruivel, acrescente o `-target=module.<nome>` em
    `.github/workflows/terraform-destroy.yaml`, na ordem de dependencia (o que depende vem
    antes). Nao inclua nada que a pipeline use para se autenticar.
 

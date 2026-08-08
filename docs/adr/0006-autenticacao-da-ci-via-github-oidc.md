@@ -22,8 +22,9 @@ Federacao OIDC entre GitHub Actions e IAM. Nenhuma credencial estatica.
   raiz dela.
 - Uma role por repositorio, nao uma role compartilhada:
   - `module.iam_app` — push/pull no ECR, com `resources` no ARN do repositorio.
-  - `module.iam_terraform` — a role da propria pipeline de infraestrutura,
-    hoje com `AdministratorAccess`.
+  - `module.iam_terraform` — a role da propria pipeline de infraestrutura. Nasceu
+    com `AdministratorAccess`; hoje usa politica escopada por dominio
+    ([ADR-0014](0014-endurecimento-da-pipeline-em-repo-publico.md)).
 - As trust policies saem de `local.github_actions_trust`, gerado por um `for` sobre
   `local.github_repos`, para nao duplicar o bloco a cada repositorio novo. Cada uma
   exige `aud = sts.amazonaws.com` e casa o `sub` com
@@ -35,7 +36,8 @@ Federacao OIDC entre GitHub Actions e IAM. Nenhuma credencial estatica.
   ficam fora dos tfvars versionados e vem de
   `secrets.APP_REPOSITORY` / `secrets.TERRAFORM_REPOSITORY`.
 - Os workflows pedem `permissions: id-token: write` e usam
-  `aws-actions/configure-aws-credentials@v4` com `role-to-assume`.
+  `aws-actions/configure-aws-credentials` com `role-to-assume`, pinada por SHA
+  ([ADR-0014](0014-endurecimento-da-pipeline-em-repo-publico.md)).
 
 ## Alternativas consideradas
 
@@ -45,7 +47,10 @@ Federacao OIDC entre GitHub Actions e IAM. Nenhuma credencial estatica.
   herdaria poder de mexer em toda a infraestrutura.
 - **Role da infraestrutura com politica minima em vez de `AdministratorAccess`** —
   correto em principio, mas o conjunto de acoes cresce a cada servico novo e uma
-  policy incompleta quebra o apply no meio. Fica como divida conhecida.
+  policy incompleta quebra o apply no meio. Ficou como divida conhecida ate o
+  repositorio virar publico, quando o risco passou a superar o custo:
+  [ADR-0014](0014-endurecimento-da-pipeline-em-repo-publico.md) fez a troca e
+  aceitou esse custo.
 
 ## Consequencias
 
@@ -55,9 +60,10 @@ Federacao OIDC entre GitHub Actions e IAM. Nenhuma credencial estatica.
   usam `["ref:refs/heads/main"]`, entao um workflow rodando em branch de feature ou
   em PR nao assume a role. Ampliar (ou apertar para `environment:prod`) e mudanca
   nessas variaveis — e cada valor acrescentado ali e uma porta a mais.
-- `module.iam_terraform` com `AdministratorAccess` significa que **comprometer o
-  repositorio de infraestrutura compromete a conta**. E o motivo de essa role e o
-  provider OIDC serem protegidos
+- Comprometer o repositorio de infraestrutura da acesso de escrita a infraestrutura.
+  Com a politica escopada de [ADR-0014](0014-endurecimento-da-pipeline-em-repo-publico.md)
+  o alcance para no prefixo `${var.name}`, mas nao vira inofensivo. E o motivo de essa
+  role e o provider OIDC serem protegidos
   ([ADR-0007](0007-prevent-destroy-como-input-de-modulo.md)) e ficarem fora do
   destroy ([ADR-0008](0008-destroy-seletivo-por-target.md)).
 - Rodar a CI num fork ou renomear o repositorio sem atualizar o secret quebra a

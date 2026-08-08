@@ -68,6 +68,11 @@ Pontos que se aprendem lendo varios arquivos:
 - **O Terraform nao faz deploy da aplicacao.** `modules/ecs` tem
   `ignore_changes = [task_definition, desired_count]`: novas revisoes vem da pipeline do app e o
   `desired_count` e do autoscaling. `app_image_tag` so vale para a primeira revisao.
+- **`module.iam_terraform` tem politica escopada, nao `AdministratorAccess`** (ADR-0014). O
+  input `policies` lista so as acoes que os modulos chamam de fato, entao **servico novo
+  exige acao nova em `iam.tf`** — senao o apply para com `AccessDenied` no meio. O id da
+  conta vem de `data.aws_caller_identity`, nunca literal: o repositorio e publico. Limite
+  da AWS de 10 politicas por role ja esta no teto.
 - **`prevent_destroy` e um input de modulo**, nao so um `lifecycle`. Em `modules/iam` e
   `modules/github-oidc` a flag alterna entre dois recursos gemeos (`this` sem protecao,
   `protected` com `lifecycle { prevent_destroy = true }`), e os outputs saem de um `one(concat(...))`.
@@ -103,6 +108,8 @@ Pontos que se aprendem lendo varios arquivos:
   `apply` do plano salvo so em push na main. `TF_ENV: prod` fixo. `plan` e `apply` moram no
   mesmo job e o `tfplan` nunca sai do runner: como artifact, o plano vazaria os valores
   sensitive e os ARNs com o id da conta para qualquer um que baixasse o run.
+- Actions de terceiros sao pinadas por **SHA de commit** com a tag no comentario (ADR-0014).
+  Nao troque por tag movel; o Dependabot em `.github/dependabot.yml` cuida da atualizacao.
 - `.github/workflows/terraform-destroy.yaml` — `workflow_dispatch` com a palavra `destroy`
   digitada; destroi por `-target`. Ao adicionar um modulo novo que deve ser destruivel,
   acrescente o `-target` correspondente ali.
