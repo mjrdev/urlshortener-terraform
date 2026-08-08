@@ -20,10 +20,12 @@ override.tf.json
 *_override.tf
 *_override.tf.json
 
-# Variaveis com credenciais ou valores especificos de ambiente
+# Variaveis com credenciais ou valores especificos de ambiente.
+# environments/ e a excecao: la ficam apenas valores de configuracao, versionados
+# de proposito. Segredos continuam vindo de TF_VAR_ no CI.
 *.tfvars
 *.tfvars.json
-!example.tfvars
+!environments/*.tfvars
 
 # Config de CLI que costuma guardar credenciais
 .terraformrc

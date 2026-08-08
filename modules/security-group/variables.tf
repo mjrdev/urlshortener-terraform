@@ -53,6 +53,17 @@ variable "ingress_rules" {
     condition     = alltrue([for r in var.ingress_rules : r.ip_protocol == "-1" || r.from_port != null])
     error_message = "from_port e obrigatorio quando ip_protocol nao e \"-1\"."
   }
+
+  # A EC2 aceita so um subconjunto de ASCII na descricao da regra. Travessao,
+  # acento e aspas curvas passam pelo plan e quebram no meio do apply, com o
+  # security group ja criado. Melhor falhar aqui.
+  validation {
+    condition = alltrue([
+      for k, r in var.ingress_rules :
+      can(regex("^[a-zA-Z0-9 ._:/()#,@\\[\\]+=&;{}!$*-]{0,255}$", coalesce(r.description, k)))
+    ])
+    error_message = "Descricao de regra de ingress invalida. A EC2 aceita ate 255 caracteres do conjunto a-zA-Z0-9 e . _-:/()#,@[]+=&;{}!$* — sem travessao (—) nem letras acentuadas."
+  }
 }
 
 variable "egress_rules" {
@@ -88,6 +99,14 @@ variable "egress_rules" {
   validation {
     condition     = alltrue([for r in var.egress_rules : r.ip_protocol == "-1" || r.from_port != null])
     error_message = "from_port e obrigatorio quando ip_protocol nao e \"-1\"."
+  }
+
+  validation {
+    condition = alltrue([
+      for k, r in var.egress_rules :
+      can(regex("^[a-zA-Z0-9 ._:/()#,@\\[\\]+=&;{}!$*-]{0,255}$", coalesce(r.description, k)))
+    ])
+    error_message = "Descricao de regra de egress invalida. A EC2 aceita ate 255 caracteres do conjunto a-zA-Z0-9 e . _-:/()#,@[]+=&;{}!$* — sem travessao (—) nem letras acentuadas."
   }
 }
 

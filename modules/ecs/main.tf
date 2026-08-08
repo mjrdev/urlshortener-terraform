@@ -2,7 +2,26 @@
 # Cluster
 ##########################
 
+# O cluster ganhou `count` quando `cluster_arn` passou a ser opcional, o que muda o
+# endereco de `.this` para `.this[0]`. Sem estes `moved` o Terraform destruiria e
+# recriaria o cluster — levando junto os servicos que rodam nele. Em instancias do
+# modulo que nunca tiveram cluster (as que recebem `cluster_arn`), os blocos sao
+# no-op.
+moved {
+  from = aws_ecs_cluster.this
+  to   = aws_ecs_cluster.this[0]
+}
+
+moved {
+  from = aws_ecs_cluster_capacity_providers.this
+  to   = aws_ecs_cluster_capacity_providers.this[0]
+}
+
+# Com cluster_arn informado o modulo so acrescenta um servico a um cluster que ja
+# existe — e assim que varios servicos dividem o mesmo cluster.
 resource "aws_ecs_cluster" "this" {
+  count = var.cluster_arn == null ? 1 : 0
+
   name = var.name
 
   setting {
@@ -16,8 +35,18 @@ resource "aws_ecs_cluster" "this" {
 # FARGATE_SPOT fica sempre disponivel no cluster, mas so recebe tasks se aparecer
 # em capacity_provider_strategy — sem estrategia o servico usa launch_type FARGATE.
 resource "aws_ecs_cluster_capacity_providers" "this" {
-  cluster_name       = aws_ecs_cluster.this.name
+  count = var.cluster_arn == null ? 1 : 0
+
+  cluster_name       = aws_ecs_cluster.this[0].name
   capacity_providers = ["FARGATE", "FARGATE_SPOT"]
+}
+
+locals {
+  cluster_arn = coalesce(var.cluster_arn, one(aws_ecs_cluster.this[*].arn))
+
+  # O ARN de cluster termina em cluster/<nome>; e dai que sai o nome quando o
+  # cluster vem de fora do modulo.
+  cluster_name = element(split("/", local.cluster_arn), 1)
 }
 
 ##########################
@@ -232,7 +261,7 @@ resource "aws_ecs_task_definition" "this" {
 
 resource "aws_ecs_service" "this" {
   name            = var.name
-  cluster         = aws_ecs_cluster.this.id
+  cluster         = local.cluster_arn
   task_definition = aws_ecs_task_definition.this.arn
   desired_count   = var.desired_count
 
@@ -305,7 +334,7 @@ resource "aws_appautoscaling_target" "this" {
   count = var.autoscaling == null ? 0 : 1
 
   service_namespace  = "ecs"
-  resource_id        = "service/${aws_ecs_cluster.this.name}/${aws_ecs_service.this.name}"
+  resource_id        = "service/${local.cluster_name}/${aws_ecs_service.this.name}"
   scalable_dimension = "ecs:service:DesiredCount"
   min_capacity       = var.autoscaling.min_capacity
   max_capacity       = var.autoscaling.max_capacity

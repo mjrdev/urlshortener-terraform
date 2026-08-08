@@ -1,19 +1,34 @@
+##########################
+# Geral
+##########################
+
 variable "name" {
-  type = string
+  description = "Prefixo de todos os recursos do stack. Distingue os ambientes entre si."
+  type        = string
 }
 
 variable "region" {
-  type    = string
-  default = "us-east-1"
+  description = "Regiao AWS do stack."
+  type        = string
+  default     = "us-east-1"
 }
 
+##########################
+# Rede
+##########################
+
 variable "vpc_cidr" {
-  type = string
+  description = "CIDR da VPC. Precisa comportar 2 x subnet_count faixas /24."
+  type        = string
 }
 
 variable "single_nat_gateway" {
-  type    = bool
-  default = true
+  description = <<-EOT
+    Com true, um unico NAT gateway atende todas as subnets privadas: mais barato e
+    ponto unico de falha. Com false, sai um NAT por AZ.
+  EOT
+  type        = bool
+  default     = true
 }
 
 variable "subnet_count" {
@@ -21,6 +36,10 @@ variable "subnet_count" {
   type        = number
   default     = 3
 }
+
+##########################
+# Aplicacao
+##########################
 
 variable "app_port" {
   description = "Porta em que o container do encurtador escuta. Alvo do target group do ALB."
@@ -67,6 +86,24 @@ variable "app_max_capacity" {
   type        = number
   default     = 4
 }
+
+##########################
+# Sandbox
+##########################
+
+variable "nginx_desired_count" {
+  description = <<-EOT
+    Tasks do servico de teste nginx. Zero mantem o servico criado, porem sem
+    custo. Vale apenas na criacao: o modulo ignora desired_count depois disso,
+    entao para mudar use `aws ecs update-service --desired-count`.
+  EOT
+  type        = number
+  default     = 1
+}
+
+##########################
+# GitHub Actions / OIDC
+##########################
 
 variable "terraform_repository" {
   description = "Repo da pipeline de infraestrutura, formato owner@ownerid/repo@repoid."

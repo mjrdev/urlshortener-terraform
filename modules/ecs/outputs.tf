@@ -1,11 +1,11 @@
 output "cluster_arn" {
-  description = "ARN do cluster ECS."
-  value       = aws_ecs_cluster.this.arn
+  description = "ARN do cluster ECS, criado pelo modulo ou recebido em cluster_arn."
+  value       = local.cluster_arn
 }
 
 output "cluster_name" {
   description = "Nome do cluster — usado no `aws ecs update-service` do deploy."
-  value       = aws_ecs_cluster.this.name
+  value       = local.cluster_name
 }
 
 output "service_name" {

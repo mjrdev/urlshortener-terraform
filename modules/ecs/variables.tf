@@ -8,6 +8,15 @@ variable "region" {
   type        = string
 }
 
+variable "cluster_arn" {
+  description = <<-EOT
+    Cluster ECS existente que recebe o servico. Null faz o modulo criar o
+    cluster; informe o ARN para colocar mais de um servico no mesmo cluster.
+  EOT
+  type        = string
+  default     = null
+}
+
 ##########################
 # Rede
 ##########################

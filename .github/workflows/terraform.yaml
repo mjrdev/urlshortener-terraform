@@ -4,25 +4,28 @@ on:
   push:
     branches:
       - main
-    paths: 
+    paths:
       - '**.tf'
+      - 'environments/**'
+      - '.terraform.lock.hcl'
   pull_request:
     branches:
       - main
-    paths: 
+    paths:
       - '**.tf'
+      - 'environments/**'
+      - '.terraform.lock.hcl'
 
 permissions:
   id-token: write
   contents: read
 
+# Configuracao nao sensivel vive em environments/prod.tfvars. Aqui ficam so os
+# valores sensitive, que carregam owner id e repo id do GitHub.
 env:
-  TF_VAR_name:                 ${{ secrets.NAME }}
-  TF_VAR_vpc_cidr:             ${{ secrets.VPC_CIDR }}
-  TF_VAR_single_nat_gateway:   ${{ secrets.SINGLE_NAT_GATEWAY }}
-  TF_VAR_subnet_count:         ${{ secrets.SUBNET_COUNT }}
   TF_VAR_app_repository:       ${{ secrets.APP_REPOSITORY }}
   TF_VAR_terraform_repository: ${{ secrets.TERRAFORM_REPOSITORY }}
+  TF_ENV: prod
 
 jobs:
   validate:
@@ -50,14 +53,14 @@ jobs:
 
       - name: Terraform Initialize
         id: init
-        run: terraform init
+        run: terraform init -input=false -backend-config=environments/${{ env.TF_ENV }}.backend.hcl
 
       - name: Terraform Validate
         id: validate
         run: terraform validate
 
   plan:
-    name: Plan
+    name: Plan & Apply
     runs-on: ubuntu-latest
     needs: validate
     steps:
@@ -77,48 +80,17 @@ jobs:
 
       - name: Terraform Initialize
         id: init
-        run: terraform init
+        run: terraform init -input=false -backend-config=environments/${{ env.TF_ENV }}.backend.hcl
 
       - name: Plan Terraform
         id: plan
-        run: terraform plan -input=false -no-color -out=tfplan
+        run: terraform plan -input=false -no-color -var-file=environments/${{ env.TF_ENV }}.tfvars -out=tfplan
 
-      - name: Upload plan artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: tfplan
-          path: tfplan
-          retention-days: 5
-
-  apply:
-    name: Apply
-    runs-on: ubuntu-latest
-    needs: plan
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION }}
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: ${{ vars.TF_VERSION }}
-
-      - name: Terraform Initialize
-        id: init
-        run: terraform init
-
-      - name: Download plan artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: tfplan
-
+      # O apply roda no mesmo job de proposito. O plano salvo carrega em texto
+      # claro os valores sensitive e os ARNs com o id da conta; em repositorio
+      # publico qualquer pessoa baixa os artifacts de um run, entao `tfplan`
+      # nunca sai da maquina do runner — passa para o apply pelo filesystem.
       - name: Apply Terraform
         id: apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -input=false -auto-approve tfplan

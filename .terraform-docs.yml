@@ -1,0 +1,25 @@
+# Configuracao do terraform-docs. Regenerar a documentacao com:
+#   terraform-docs markdown table --recursive --recursive-path modules .
+# As tabelas sao injetadas entre os marcadores BEGIN_TF_DOCS / END_TF_DOCS de
+# cada README.md — o texto escrito a mao fora dos marcadores e preservado.
+
+formatter: markdown table
+
+output:
+  file: README.md
+  mode: inject
+  template: |-
+    <!-- BEGIN_TF_DOCS -->
+    {{ .Content }}
+    <!-- END_TF_DOCS -->
+
+sort:
+  enabled: true
+  by: required
+
+settings:
+  anchor: false
+  default: true
+  description: true
+  required: true
+  type: true

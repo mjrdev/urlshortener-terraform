@@ -16,6 +16,17 @@ output "zone_id" {
 output "target_group_arn" {
   description = "ARN do target group — e o valor esperado por aws_ecs_service.load_balancer."
   value       = aws_lb_target_group.this.arn
+
+  # O ARN do target group existe assim que o recurso e criado, mas o ECS so aceita
+  # registrar um servico nele depois que ele esta associado a um load balancer —
+  # o que quem faz e o listener. Sem este depends_on, quem consome o output
+  # depende apenas do target group, e o Terraform pode criar o servico antes do
+  # listener: a API responde "The target group does not have an associated load
+  # balancer" e o apply quebra (um segundo apply passaria, por sorte de ordem).
+  depends_on = [
+    aws_lb_listener.http,
+    aws_lb_listener.https,
+  ]
 }
 
 output "target_group_name" {

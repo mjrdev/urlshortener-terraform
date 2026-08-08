@@ -1,52 +1,88 @@
+##########################
+# Rede
+##########################
+
 output "vpc_id" {
-  value       = module.vpc.vpc_id
   description = "ID da VPC"
+  value       = module.vpc.vpc_id
 }
+
+##########################
+# ECR e IAM
+##########################
 
 output "ecr_repository_url" {
-  value       = module.shortener-ecr.repository_url
   description = "URL do repositorio ECR — destino do docker push"
+  value       = module.ecr.repository_url
 }
 
-output "iam_urlshortener_role_arn" {
-  value = module.iam_urlshortener.role_arn
+output "iam_app_role_arn" {
+  description = "Role assumida pelo GitHub Actions da aplicacao"
+  value       = module.iam_app.role_arn
 }
 
 output "terraform_role_arn" {
-  value = module.iam_terraform.role_arn
+  description = "Role assumida pela pipeline de infraestrutura"
+  value       = module.iam_terraform.role_arn
 }
 
+##########################
+# Aplicacao
+##########################
+
 output "alb_dns_name" {
-  value       = module.alb_ecs.dns_name
   description = "DNS publico do ALB — ponto de entrada da aplicacao"
+  value       = module.alb.dns_name
 }
 
 output "alb_target_group_arn" {
-  value       = module.alb_ecs.target_group_arn
   description = "Target group a ser referenciado pelo aws_ecs_service"
+  value       = module.alb.target_group_arn
 }
 
-output "ecs_cluster_name" {
-  value       = module.ecs.cluster_name
-  description = "Cluster ECS — usado no aws ecs update-service do deploy"
+# Outputs de `module.ecs_app`, comentados junto com o servico da aplicacao em
+# `app.tf`. Descomentar ao reativar o app.
+
+# output "ecs_cluster_name" {
+#   description = "Cluster ECS — usado no aws ecs update-service do deploy"
+#   value       = module.ecs_app.cluster_name
+# }
+
+# output "ecs_service_name" {
+#   description = "Servico ECS do encurtador"
+#   value       = module.ecs_app.service_name
+# }
+
+# output "ecs_task_definition_family" {
+#   description = "Familia da task definition — base das revisoes publicadas pela pipeline"
+#   value       = module.ecs_app.task_definition_family
+# }
+
+# output "ecs_container_name" {
+#   description = "Nome do container na task definition"
+#   value       = module.ecs_app.container_name
+# }
+
+# output "ecs_log_group_name" {
+#   description = "Log group com a saida dos containers"
+#   value       = module.ecs_app.log_group_name
+# }
+
+##########################
+# Sandbox (nginx)
+##########################
+
+output "ecs_nginx_cluster_name" {
+  description = "Cluster ECS do nginx — argumento de `aws ecs execute-command --cluster`"
+  value       = module.ecs_nginx.cluster_name
 }
 
-output "ecs_service_name" {
-  value       = module.ecs.service_name
-  description = "Servico ECS do encurtador"
+output "ecs_nginx_service_name" {
+  description = "Servico de teste nginx"
+  value       = module.ecs_nginx.service_name
 }
 
-output "ecs_task_definition_family" {
-  value       = module.ecs.task_definition_family
-  description = "Familia da task definition — base das revisoes publicadas pela pipeline"
-}
-
-output "ecs_container_name" {
-  value       = module.ecs.container_name
-  description = "Nome do container na task definition"
-}
-
-output "ecs_log_group_name" {
-  value       = module.ecs.log_group_name
-  description = "Log group com a saida dos containers"
+output "ecs_nginx_log_group_name" {
+  description = "Log group do servico de teste nginx"
+  value       = module.ecs_nginx.log_group_name
 }
