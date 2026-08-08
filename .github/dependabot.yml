@@ -1,0 +1,11 @@
+# Sem isto, pinar as actions por SHA congela a versao para sempre — inclusive
+# correcoes de seguranca. O Dependabot abre PR com o SHA novo e a tag no
+# comentario, entao a atualizacao continua sendo uma decisao revisada.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: 'ci'

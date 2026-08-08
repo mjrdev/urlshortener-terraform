@@ -118,9 +118,21 @@ Verifique cada uma antes de terminar:
 - **Security group** — se o recurso tem SG, crie um bloco `modules/security-group`
   (`sg_<recurso>`) no mesmo arquivo, acima do recurso, liberando o minimo: prefira
   `referenced_security_group_id` do consumidor a CIDR aberto.
-- **IAM** — se a aplicacao ou a pipeline precisa acessar o recurso, acrescente uma policy
-  em `module.iam_app` / `module.iam_terraform` em `iam.tf`, com `resources` escopado no
-  ARN do recurso (como `ecr-push` faz). Nao crie IAM solto.
+- **IAM da aplicacao** — se a aplicacao precisa acessar o recurso em runtime, acrescente
+  uma policy em `module.iam_app` em `iam.tf`, com `resources` escopado no ARN do recurso
+  (como `ecr-push` faz). Nao crie IAM solto.
+- **IAM da pipeline (obrigatorio, servico novo sempre precisa)** — `module.iam_terraform`
+  **nao tem `AdministratorAccess`**: o input `policies` lista so as acoes que os modulos
+  chamam de fato (ADR-0014). Servico novo sem entrada la faz o `apply` parar com
+  `AccessDenied` **no meio**, com parte da infra criada. Acrescente em `iam.tf` uma
+  policy nova com as acoes de ciclo de vida do servico (create/delete/describe/tag do
+  recurso, na conta so o que o Terraform chama), escopada no ARN quando o servico
+  suportar resource-level — e no conjunto de acoes quando nao suportar. Nao resolva isso
+  reanexando `AdministratorAccess`.
+  Dois limites: a AWS permite **10 politicas gerenciadas por role e o teto ja esta
+  atingido**, entao agrupe a acao nova numa policy existente do mesmo dominio em vez de
+  criar a 11a; e o id da conta vem de `local.account_id` (`data.aws_caller_identity`),
+  nunca literal — o repositorio e publico.
 - **Outputs** — exporte em `outputs.tf` da raiz, na secao certa, so o que alguem de fora
   usa (endpoint, ARN, URL, nome do bucket).
 - **Destroy** — acrescente `-target=module.<nome>` em

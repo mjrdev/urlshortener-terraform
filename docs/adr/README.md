@@ -22,6 +22,7 @@ Ver [ADR-0001](0001-registrar-decisoes-em-adr.md) para o processo. Novo ADR: cop
 | [0011](0011-versionamento-de-provider.md) | Versao do provider fixada no root, range aberto nos modulos | aceito |
 | [0012](0012-readme-gerado-por-terraform-docs.md) | README de modulo gerado por terraform-docs | aceito |
 | [0013](0013-servico-sandbox-descartavel.md) | Servico sandbox descartavel para validar a plataforma | aceito |
+| [0014](0014-endurecimento-da-pipeline-em-repo-publico.md) | Endurecimento da pipeline em repositorio publico | aceito |
 
 ## Por tema
 
@@ -29,13 +30,16 @@ Ver [ADR-0001](0001-registrar-decisoes-em-adr.md) para o processo. Novo ADR: cop
 - **Organizacao do codigo** — [0003](0003-root-composicional-com-modulos-locais.md), [0011](0011-versionamento-de-provider.md), [0012](0012-readme-gerado-por-terraform-docs.md)
 - **Topologia e rede** — [0004](0004-ecs-fargate-atras-de-alb.md), [0009](0009-security-groups-por-mapa-de-regras.md), [0010](0010-nat-gateway-unico.md)
 - **Fronteira com a aplicacao** — [0005](0005-deploy-da-aplicacao-fora-do-terraform.md), [0013](0013-servico-sandbox-descartavel.md)
-- **Acesso e ciclo de vida** — [0006](0006-autenticacao-da-ci-via-github-oidc.md), [0007](0007-prevent-destroy-como-input-de-modulo.md), [0008](0008-destroy-seletivo-por-target.md)
+- **Acesso e ciclo de vida** — [0006](0006-autenticacao-da-ci-via-github-oidc.md), [0007](0007-prevent-destroy-como-input-de-modulo.md), [0008](0008-destroy-seletivo-por-target.md), [0014](0014-endurecimento-da-pipeline-em-repo-publico.md)
 
 ## Dividas registradas
 
 Pontos que os ADRs reconhecem como pendencia conhecida, nao como estado desejado:
 
-- `module.iam_terraform` usa `AdministratorAccess` ([0006](0006-autenticacao-da-ci-via-github-oidc.md)).
+- Escalation dentro do prefixo do projeto continua possivel: falta permissions
+  boundary nas roles que a pipeline cria ([0014](0014-endurecimento-da-pipeline-em-repo-publico.md)).
+- O `plan` em PR usaria a mesma role de escrita do `apply`; falta uma role
+  read-only separada ([0014](0014-endurecimento-da-pipeline-em-repo-publico.md)).
 - Trafego de entrada ainda em HTTP; falta `certificate_arn` ([0004](0004-ecs-fargate-atras-de-alb.md)).
 - Lista de `-target` do destroy e manual ([0008](0008-destroy-seletivo-por-target.md)).
 - Nada forca a regeneracao dos READMEs ([0012](0012-readme-gerado-por-terraform-docs.md)).
