@@ -31,6 +31,7 @@ module "sg_ecs_nginx" {
       ip_protocol = "-1"
     }
   }
+
 }
 
 # Servico descartavel para validar cluster, rede e permissoes sem depender do

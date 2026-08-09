@@ -104,7 +104,9 @@ module "iam_terraform" {
   # o uso classico de conta comprometida para mineracao), `iam:*User*`,
   # `iam:CreateAccessKey` (bloqueia persistencia) e `s3:DeleteBucket` (o state).
   #
-  # Limite da AWS: 10 politicas gerenciadas por role. Hoje sao 8.
+  # Limite da AWS: 10 politicas gerenciadas por role. Hoje sao 10 — o teto. Acao
+  # nova entra numa entrada existente; entrada nova exige juntar duas ou pedir
+  # aumento de quota.
   policies = {
     # ARNs de rede sao atribuidos na criacao, entao a maioria das acoes de EC2 nao
     # aceita resource-level: o escopo aqui vem da lista de acoes, nao do recurso.
@@ -220,7 +222,16 @@ module "iam_terraform" {
         "logs:UntagResource",
         "logs:ListTagsForResource",
       ]
-      resources = ["arn:aws:logs:*:${local.account_id}:log-group:/ecs/${var.name}*"]
+      resources = [
+        "arn:aws:logs:*:${local.account_id}:log-group:/ecs/${var.name}*",
+
+        # `logs:DescribeLogGroups` e uma operacao de listagem: a AWS a avalia contra
+        # este pseudo-ARN de log-group vazio, nunca contra o grupo que o filtro
+        # devolve. Sem ele o `terraform plan` para com AccessDenied so ao **ler** o
+        # log group do ECS. Nao afrouxa as demais acoes: nenhum log group real casa
+        # com este ARN, entao Create/Delete continuam presos ao prefixo /ecs/<name>.
+        "arn:aws:logs:*:${local.account_id}:log-group::log-stream:",
+      ]
     }
 
     autoscaling = {
