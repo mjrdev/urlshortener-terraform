@@ -104,6 +104,14 @@ module "iam_terraform" {
   # o uso classico de conta comprometida para mineracao), `iam:*User*`,
   # `iam:CreateAccessKey` (bloqueia persistencia) e `s3:DeleteBucket` (o state).
   #
+  # Lembrar de duas armadilhas ao acrescentar acao:
+  # 1. Operacao de listagem (`List*`, e `logs:DescribeLogGroups`) nao aceita
+  #    resource-level: a AWS avalia contra um recurso generico, entao numa entrada
+  #    escopada por ARN ela nunca autoriza. Ou vai para uma entrada com `"*"`, ou
+  #    o ARN generico entra na lista de resources (ver `logs`).
+  # 2. O destroy chama APIs que o apply nunca chamou — `ec2:DisassociateAddress`
+  #    (EIP do NAT) e o exemplo. Validar as duas direcoes antes de fechar.
+  #
   # Limite da AWS: 10 politicas gerenciadas por role. Hoje sao 10 — o teto. Acao
   # nova entra numa entrada existente; entrada nova exige juntar duas ou pedir
   # aumento de quota.
@@ -125,6 +133,10 @@ module "iam_terraform" {
         "ec2:DeleteInternetGateway",
         "ec2:AllocateAddress",
         "ec2:ReleaseAddress",
+        # O EIP do NAT gateway: o provider desassocia antes de liberar, entao sem
+        # estas duas o destroy para depois de ja ter apagado a VPC.
+        "ec2:AssociateAddress",
+        "ec2:DisassociateAddress",
         "ec2:CreateNatGateway",
         "ec2:DeleteNatGateway",
         "ec2:CreateRouteTable",
@@ -268,7 +280,6 @@ module "iam_terraform" {
         "iam:GetRole",
         "iam:UpdateRole",
         "iam:UpdateAssumeRolePolicy",
-        "iam:ListRoles",
         "iam:TagRole",
         "iam:UntagRole",
         "iam:ListRoleTags",
@@ -295,7 +306,6 @@ module "iam_terraform" {
         "iam:ListPolicyVersions",
         "iam:CreatePolicyVersion",
         "iam:DeletePolicyVersion",
-        "iam:ListPolicies",
         "iam:TagPolicy",
         "iam:UntagPolicy",
         "iam:ListEntitiesForPolicy",
@@ -304,7 +314,6 @@ module "iam_terraform" {
         "iam:GetOpenIDConnectProvider",
         "iam:UpdateOpenIDConnectProviderThumbprint",
         "iam:TagOpenIDConnectProvider",
-        "iam:ListOpenIDConnectProviders",
       ]
       resources = [
         "arn:aws:iam::${local.account_id}:policy/${var.name}*",
