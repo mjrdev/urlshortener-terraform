@@ -13,12 +13,12 @@ roles do GitHub Actions via OIDC (sem access key de longa duracao).
                       │ target group (target_type = ip)
         ┌─────────────▼─────────────┐
         │      ECS Fargate          │   subnets privadas
-        │  ┌──────────┐ ┌────────┐  │
-        │  │ app      │ │ nginx  │  │   ambos no mesmo cluster
-        │  │ :8080    │ │ :80    │  │   nginx = sandbox, sem ALB
-        │  └────┬─────┘ └────────┘  │
-        └───────┼───────────────────┘
-                │ NAT gateway
+        │       ┌──────────┐        │
+        │       │ app      │        │   1 a 4 tasks (autoscaling por CPU)
+        │       │ :8080    │        │
+        │       └────┬─────┘        │
+        └────────────┼──────────────┘
+                     │ NAT gateway
              ECR / CloudWatch Logs / SSM
 ```
 
@@ -32,7 +32,6 @@ roles do GitHub Actions via OIDC (sem access key de longa duracao).
 | `ecr.tf` | repositorio de imagens |
 | `iam.tf` | provider OIDC e as roles do GitHub Actions |
 | `app.tf` | security groups, ALB e servico ECS da aplicacao |
-| `sandbox.tf` | servico nginx de teste — descartavel, pode ser apagado inteiro |
 | `moved.tf` | renomeacoes de modulo pendentes de apply (temporario) |
 | `environments/` | tfvars e backend config por ambiente |
 | `modules/` | modulos reusaveis, cada um com seu README |
@@ -135,12 +134,10 @@ No providers.
 | alb | ./modules/elb | n/a |
 | ecr | ./modules/ecr | n/a |
 | ecs\_app | ./modules/ecs | n/a |
-| ecs\_nginx | ./modules/ecs | n/a |
 | github\_oidc | ./modules/github-oidc | n/a |
 | iam\_app | ./modules/iam | n/a |
 | iam\_terraform | ./modules/iam | n/a |
 | sg\_alb | ./modules/security-group | n/a |
-| sg\_ecs\_nginx | ./modules/security-group | n/a |
 | sg\_ecs\_tasks | ./modules/security-group | n/a |
 | vpc | ./modules/vpc | n/a |
 
@@ -165,7 +162,6 @@ No resources.
 | app\_port | Porta em que o container do encurtador escuta. Alvo do target group do ALB. | `number` | `8080` | no |
 | github\_subjects | Refs autorizadas a assumir a role, sufixo do claim `sub` do OIDC.<br/>Exemplos: "ref:refs/heads/main", "environment:prod", "pull\_request". | `list(string)` | <pre>[<br/>  "ref:refs/heads/main"<br/>]</pre> | no |
 | github\_subjects\_terraform | Refs autorizadas na role de infraestrutura. | `list(string)` | <pre>[<br/>  "ref:refs/heads/main"<br/>]</pre> | no |
-| nginx\_desired\_count | Tasks do servico de teste nginx. Zero mantem o servico criado, porem sem<br/>custo. Vale apenas na criacao: o modulo ignora desired\_count depois disso,<br/>entao para mudar use `aws ecs update-service --desired-count`. | `number` | `1` | no |
 | region | Regiao AWS do stack. | `string` | `"us-east-1"` | no |
 | single\_nat\_gateway | Com true, um unico NAT gateway atende todas as subnets privadas: mais barato e<br/>ponto unico de falha. Com false, sai um NAT por AZ. | `bool` | `true` | no |
 | subnet\_count | Quantidade de subnets por tier: N publicas e N privadas. | `number` | `3` | no |
@@ -180,8 +176,6 @@ No resources.
 | ecs\_cluster\_name | Cluster ECS — usado no aws ecs update-service do deploy |
 | ecs\_container\_name | Nome do container na task definition |
 | ecs\_log\_group\_name | Log group com a saida dos containers |
-| ecs\_nginx\_log\_group\_name | Log group do servico de teste nginx |
-| ecs\_nginx\_service\_name | Servico de teste nginx, no mesmo cluster do app |
 | ecs\_service\_name | Servico ECS do encurtador |
 | ecs\_task\_definition\_family | Familia da task definition — base das revisoes publicadas pela pipeline |
 | iam\_app\_role\_arn | Role assumida pelo GitHub Actions da aplicacao |

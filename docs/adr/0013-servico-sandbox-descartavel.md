@@ -1,7 +1,15 @@
 # ADR 0013 — Servico sandbox descartavel para validar a plataforma
 
-- **Status:** aceito
+- **Status:** descontinuado em 2026-08-13
 - **Data:** 2026-08-08
+
+> **Descontinuado.** O sandbox cumpriu o papel: cluster, NAT, security groups e
+> roles de task foram validados com o nginx antes de existir imagem da aplicacao.
+> Com `module.ecs_app` ativo e recebendo o trafego do ALB, `sandbox.tf` foi
+> apagado, junto com a variavel `nginx_desired_count` e os `-target` do workflow
+> de destroy. O registro fica pelo contexto; para recriar um sandbox, este ADR
+> descreve a forma que funcionou — lembrando que o servico novo nao pode dividir
+> o target group do app.
 
 ## Contexto
 

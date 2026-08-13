@@ -28,9 +28,3 @@ app_cpu           = 256
 app_memory        = 512
 app_desired_count = 1
 app_max_capacity  = 2
-
-##########################
-# Sandbox
-##########################
-
-nginx_desired_count = 1

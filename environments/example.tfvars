@@ -21,5 +21,3 @@ app_cpu           = 256
 app_memory        = 512
 app_desired_count = 1
 app_max_capacity  = 2
-
-nginx_desired_count = 0

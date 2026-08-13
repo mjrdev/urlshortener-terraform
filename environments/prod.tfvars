@@ -40,9 +40,3 @@ app_desired_count = 1
 # o default do root). O terraform.tfvars local dizia 2 — se 2 for a intencao,
 # mudar aqui vira uma alteracao deliberada, visivel no plan.
 app_max_capacity = 4
-
-##########################
-# Sandbox
-##########################
-
-nginx_desired_count = 1

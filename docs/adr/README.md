@@ -21,7 +21,7 @@ Ver [ADR-0001](0001-registrar-decisoes-em-adr.md) para o processo. Novo ADR: cop
 | [0010](0010-nat-gateway-unico.md) | NAT gateway unico, com HA como opcao de ambiente | aceito |
 | [0011](0011-versionamento-de-provider.md) | Versao do provider fixada no root, range aberto nos modulos | aceito |
 | [0012](0012-readme-gerado-por-terraform-docs.md) | README de modulo gerado por terraform-docs | aceito |
-| [0013](0013-servico-sandbox-descartavel.md) | Servico sandbox descartavel para validar a plataforma | aceito |
+| [0013](0013-servico-sandbox-descartavel.md) | Servico sandbox descartavel para validar a plataforma | descontinuado |
 | [0014](0014-endurecimento-da-pipeline-em-repo-publico.md) | Endurecimento da pipeline em repositorio publico | aceito |
 
 ## Por tema
