@@ -24,8 +24,12 @@ funciona, e o segredo vive no Parameter Store.**
   um dia, Performance Insights desligado, `skip_final_snapshot` e sem
   `deletion_protection`. Sem parameter group proprio: o default da familia ja
   exige TLS, e a aplicacao conecta com `sslmode=require`.
-- `modules/elasticache` — `aws_elasticache_cluster` com um no `cache.t4g.micro`,
-  engine `valkey`, sem replica, sem TLS e sem auth token.
+- `modules/elasticache` — `aws_elasticache_replication_group` com **um no**
+  `cache.t4g.micro`, engine `valkey`, sem replica, sem failover, sem TLS e sem auth
+  token. O recurso de grupo e o unico caminho para Valkey: `aws_elasticache_cluster`
+  aceita so `memcached` e `redis` (validado no provider 6.60). Valkey custa cerca de
+  20% menos por no que Redis OSS no mesmo tipo, entao o grupo com um no e mais
+  barato que o cluster equivalente.
 - `modules/ssm-parameter` — senha do banco e chave de assinatura como
   `SecureString` sob a chave gerenciada `alias/aws/ssm`. Os valores nascem de
   `random_password` e a task recebe o **ARN**, nunca o valor.
@@ -49,8 +53,12 @@ funciona, e o segredo vive no Parameter Store.**
   dado.
 - **ElastiCache Serverless** — escala sozinho, mas a cobranca minima de storage e
   ECPU fica acima do no `t4g.micro` para esta carga.
-- **`aws_elasticache_replication_group`** — daria failover e replica; nao ha
-  requisito de HA para um cache que pode nascer vazio.
+- **`aws_elasticache_cluster` com `redis`** — recurso mais simples e sem grupo,
+  mas fecha a porta para Valkey e custa ~20% mais por no. Foi a primeira tentativa;
+  o plan parou em `expected engine to be one of ["memcached" "redis"]`.
+- **Replica ou failover no grupo** — `num_cache_clusters` acima de 1 liga o failover
+  sozinho e multiplica o custo; nao ha requisito de HA para um cache que pode nascer
+  vazio.
 - **Aumento de quota de politicas IAM** — depende de ticket na AWS e nao resolve
   para quem clona o repositorio.
 

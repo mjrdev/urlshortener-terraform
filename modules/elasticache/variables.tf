@@ -3,6 +3,12 @@ variable "name" {
   type        = string
 }
 
+variable "description" {
+  description = "Descricao do replication group. Nulo gera uma a partir de `name`."
+  type        = string
+  default     = null
+}
+
 variable "subnets" {
   description = "Subnets do subnet group — use as privadas."
   type        = list(string)
@@ -37,9 +43,24 @@ variable "node_type" {
 }
 
 variable "num_cache_nodes" {
-  description = "Quantidade de nos. Acima de 1 exige engine com modo cluster."
+  description = <<-EOT
+    Quantidade de nos do grupo. Com 1 nao ha replica nem failover — o mais barato.
+    Acima de 1 o failover automatico e ligado sozinho.
+  EOT
   type        = number
   default     = 1
+}
+
+variable "multi_az" {
+  description = "Distribui os nos entre AZs. So vale com mais de um no."
+  type        = bool
+  default     = false
+}
+
+variable "transit_encryption_enabled" {
+  description = "TLS na conexao. Ligado exige cliente com TLS (REDIS_TLS=true no app)."
+  type        = bool
+  default     = false
 }
 
 variable "port" {

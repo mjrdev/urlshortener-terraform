@@ -198,8 +198,8 @@ terraform-docs markdown table --config .terraform-docs.yml modules/<modulo>
 
 | Name | Version |
 | ---- | ------- |
-| aws | 6.56.0 |
-| random | ~> 3.0 |
+| aws | 6.60.0 |
+| random | 3.9.0 |
 
 ## Modules
 
