@@ -40,6 +40,11 @@ funciona, e o segredo vive no Parameter Store.**
   de `module.iam_terraform` viraram uma so, `compute`. As tres ja usavam
   `resources = ["*"]`, entao a uniao nao afrouxa escopo — libera slot para
   `data-stores` e `ssm`.
+- `compute` virou tambem o lugar das **leituras** de RDS, ElastiCache e SSM
+  (`rds:Describe*`, `elasticache:Describe*`, `ssm:DescribeParameters`). Sao
+  operacoes de listagem: a AWS as avalia contra um ARN generico (`db:*`,
+  `parameter/*`), que nenhum escopo por prefixo cobre — o mesmo caso de
+  `logs:DescribeLogGroups`. O que muda estado continua escopado por ARN.
 
 ## Alternativas consideradas
 
@@ -53,6 +58,11 @@ funciona, e o segredo vive no Parameter Store.**
   dado.
 - **ElastiCache Serverless** — escala sozinho, mas a cobranca minima de storage e
   ECPU fica acima do no `t4g.micro` para esta carga.
+- **Manter as leituras escopadas por ARN** — foi a primeira tentativa e o apply
+  parou tres vezes: `rds:DescribeDBInstances` avaliado contra `db:*`,
+  `ssm:DescribeParameters` contra `parameter/*` e `elasticache:CreateReplicationGroup`
+  contra `parametergroup:*`. Escopo que a API nao suporta nao protege nada, so
+  quebra o apply.
 - **`aws_elasticache_cluster` com `redis`** — recurso mais simples e sem grupo,
   mas fecha a porta para Valkey e custa ~20% mais por no. Foi a primeira tentativa;
   o plan parou em `expected engine to be one of ["memcached" "redis"]`.

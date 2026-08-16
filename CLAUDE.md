@@ -76,7 +76,9 @@ Pontos que se aprendem lendo varios arquivos:
   conta vem de `data.aws_caller_identity`, nunca literal: o repositorio e publico. Limite
   da AWS de 10 politicas por role ja esta no teto — a entrada `compute` (ECS + ELB +
   autoscaling) e o resultado de fundir tres entradas para abrir espaco. Fundir so vale
-  entre entradas que ja compartilham o mesmo `resources`.
+  entre entradas que ja compartilham o mesmo `resources`. `compute` e tambem onde vivem
+  as acoes sem resource-level, inclusive `rds:Describe*`, `elasticache:Describe*` e
+  `ssm:DescribeParameters`: escopar listagem por ARN nao protege, so quebra o apply.
 - **Dados em `datastores.tf`** (ADR-0015): RDS Postgres, ElastiCache Valkey, os security
   groups dos dois e os segredos no SSM. Senha do banco e `JWT_SECRET` vem de
   `random_password` e entram na task por `secrets` (ARN do parametro, nunca o valor) —
