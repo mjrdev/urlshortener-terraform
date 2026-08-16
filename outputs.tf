@@ -40,49 +40,27 @@ output "alb_target_group_arn" {
   value       = module.alb.target_group_arn
 }
 
-# Outputs de `module.ecs_app`, comentados junto com o servico da aplicacao em
-# `app.tf`. Descomentar ao reativar o app.
-
-# output "ecs_cluster_name" {
-#   description = "Cluster ECS — usado no aws ecs update-service do deploy"
-#   value       = module.ecs_app.cluster_name
-# }
-
-# output "ecs_service_name" {
-#   description = "Servico ECS do encurtador"
-#   value       = module.ecs_app.service_name
-# }
-
-# output "ecs_task_definition_family" {
-#   description = "Familia da task definition — base das revisoes publicadas pela pipeline"
-#   value       = module.ecs_app.task_definition_family
-# }
-
-# output "ecs_container_name" {
-#   description = "Nome do container na task definition"
-#   value       = module.ecs_app.container_name
-# }
-
-# output "ecs_log_group_name" {
-#   description = "Log group com a saida dos containers"
-#   value       = module.ecs_app.log_group_name
-# }
-
-##########################
-# Sandbox (nginx)
-##########################
-
-output "ecs_nginx_cluster_name" {
-  description = "Cluster ECS do nginx — argumento de `aws ecs execute-command --cluster`"
-  value       = module.ecs_nginx.cluster_name
+output "ecs_cluster_name" {
+  description = "Cluster ECS — usado no aws ecs update-service do deploy"
+  value       = module.ecs_app.cluster_name
 }
 
-output "ecs_nginx_service_name" {
-  description = "Servico de teste nginx"
-  value       = module.ecs_nginx.service_name
+output "ecs_service_name" {
+  description = "Servico ECS do encurtador"
+  value       = module.ecs_app.service_name
 }
 
-output "ecs_nginx_log_group_name" {
-  description = "Log group do servico de teste nginx"
-  value       = module.ecs_nginx.log_group_name
+output "ecs_task_definition_family" {
+  description = "Familia da task definition — base das revisoes publicadas pela pipeline"
+  value       = module.ecs_app.task_definition_family
+}
+
+output "ecs_container_name" {
+  description = "Nome do container na task definition"
+  value       = module.ecs_app.container_name
+}
+
+output "ecs_log_group_name" {
+  description = "Log group com a saida dos containers"
+  value       = module.ecs_app.log_group_name
 }

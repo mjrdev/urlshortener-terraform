@@ -25,7 +25,6 @@ destroi por `-target` explicito, listando os modulos na ordem inversa da
 dependencia:
 
 ```
--target=module.ecs_nginx  -target=module.sg_ecs_nginx
 -target=module.ecs_app    -target=module.sg_ecs_tasks
 -target=module.alb        -target=module.sg_alb
 -target=module.vpc        -target=module.ecr

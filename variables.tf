@@ -88,20 +88,6 @@ variable "app_max_capacity" {
 }
 
 ##########################
-# Sandbox
-##########################
-
-variable "nginx_desired_count" {
-  description = <<-EOT
-    Tasks do servico de teste nginx. Zero mantem o servico criado, porem sem
-    custo. Vale apenas na criacao: o modulo ignora desired_count depois disso,
-    entao para mudar use `aws ecs update-service --desired-count`.
-  EOT
-  type        = number
-  default     = 1
-}
-
-##########################
 # GitHub Actions / OIDC
 ##########################
 

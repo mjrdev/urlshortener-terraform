@@ -42,17 +42,16 @@ jobs:
         id: init
         run: terraform init -input=false -backend-config=environments/${{ env.TF_ENV }}.backend.hcl
 
-      # `module.ecs_app` e `module.sg_ecs_tasks` estao comentados em app.tf
-      # (ambiente em modo sandbox, so com o nginx). Reativar os -target junto
-      # com os modulos: alvo que nao existe na configuracao vira aviso, nao erro,
-      # entao a ausencia passaria despercebida e o recurso sobreviveria.
+      # Modulo novo que deve ser destruivel entra como -target aqui: alvo que nao
+      # existe na configuracao vira aviso, nao erro, entao a ausencia passaria
+      # despercebida e o recurso sobreviveria ao destroy.
       - name: Terraform Plan Destroy
         id: plan
         run: |
           terraform plan -destroy -input=false -out=tfdestroy.plan \
             -var-file=environments/${{ env.TF_ENV }}.tfvars \
-            -target=module.ecs_nginx \
-            -target=module.sg_ecs_nginx \
+            -target=module.ecs_app \
+            -target=module.sg_ecs_tasks \
             -target=module.alb \
             -target=module.sg_alb \
             -target=module.vpc \

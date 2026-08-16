@@ -56,12 +56,11 @@ estrategia de state deve vir acompanhada de um ADR novo ou atualizado.
 
 Root module composicional: os `.tf` da raiz so instanciam modulos locais e ligam um no outro —
 nenhum `resource` mora na raiz. A divisao em arquivos (`network.tf`, `ecr.tf`, `iam.tf`,
-`app.tf`, `sandbox.tf`) e puramente organizacional; Terraform le tudo como um arquivo so.
+`app.tf`) e puramente organizacional; Terraform le tudo como um arquivo so.
 
 Fluxo: internet → ALB (subnets publicas, `target_type = "ip"` porque `awsvpc` registra os ENIs
 das tasks) → tasks ECS nas subnets privadas → saida para ECR/CloudWatch pelo NAT.
-`module.ecs_nginx` (em `sandbox.tf`) e um servico descartavel que reusa o cluster de
-`module.ecs_app` via `cluster_arn`, sem target group — o arquivo inteiro pode ser apagado.
+`module.ecs_app` e o unico servico do ambiente e cria o proprio cluster.
 
 Pontos que se aprendem lendo varios arquivos:
 
