@@ -67,6 +67,9 @@ Pontos que se aprendem lendo varios arquivos:
 - **O Terraform nao faz deploy da aplicacao.** `modules/ecs` tem
   `ignore_changes = [task_definition, desired_count]`: novas revisoes vem da pipeline do app e o
   `desired_count` e do autoscaling. `app_image_tag` so vale para a primeira revisao.
+  As permissoes desse deploy vivem em `module.iam_app` (`iam.tf`), com a mesma regra
+  de `iam_terraform`: so as acoes que a pipeline do app chama de fato, entao mudanca
+  no fluxo de deploy exige acao nova ali. O passo a passo esta no ADR-0005 e no README.
 - **`module.iam_terraform` tem politica escopada, nao `AdministratorAccess`** (ADR-0014). O
   input `policies` lista so as acoes que os modulos chamam de fato, entao **servico novo
   exige acao nova em `iam.tf`** — senao o apply para com `AccessDenied` no meio. O id da
@@ -103,8 +106,9 @@ Pontos que se aprendem lendo varios arquivos:
 
 ## CI
 
-- `.github/workflows/terraform.yaml` — PR e push na main: `fmt -check`, `validate`, `plan`;
-  `apply` do plano salvo so em push na main. `TF_ENV: prod` fixo. `plan` e `apply` moram no
+- `.github/workflows/terraform.yaml` — em PR so `fmt -check` e `validate`, com
+  `init -backend=false` (sem state, sem AWS: a role so e assumivel de `refs/heads/main`).
+  `plan` e `apply` so em push na main. `TF_ENV: prod` fixo. `plan` e `apply` moram no
   mesmo job e o `tfplan` nunca sai do runner: como artifact, o plano vazaria os valores
   sensitive e os ARNs com o id da conta para qualquer um que baixasse o run.
 - Actions de terceiros sao pinadas por **SHA de commit** com a tag no comentario (ADR-0014).
