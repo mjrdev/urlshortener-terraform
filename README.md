@@ -168,6 +168,10 @@ pela pipeline.
   so e assumivel de `refs/heads/main`, entao um PR que falasse com a AWS falharia
   sempre. `plan` e `apply` acontecem apenas no push na main, no mesmo job: o
   `tfplan` nao vira artifact porque exporia valores sensitive a quem baixasse.
+  Tem tambem `workflow_dispatch` com um input `target`: quando a mudanca **e** a
+  permissao que o proprio refresh precisa, o plan do stack inteiro falha antes de
+  chegar ao apply que corrigiria a role — rodar com `target = module.iam_terraform`
+  aplica so a policy e destrava o run seguinte.
 - **`terraform-destroy.yaml`** — `workflow_dispatch` com confirmacao digitada.
   Destroi por `-target`, deixando de fora `module.github_oidc` e
   `module.iam_terraform`: os dois tem `prevent_destroy` e derrubar qualquer um
