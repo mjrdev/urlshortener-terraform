@@ -26,7 +26,7 @@
 - [x] 2.2 Inputs: `name`, `value` (sensitive), `type` (default `SecureString`),
       `description`, `tags`; aplicar `merge({ Name = var.name }, var.tags)`
 - [x] 2.3 Outputs: `arn` e `name`; nunca expor `value`
-- [ ] 2.4 Gerar `modules/ssm-parameter/README.md` com terraform-docs
+- [x] 2.4 Gerar `modules/ssm-parameter/README.md` com terraform-docs
 
 ## 3. Modulo `modules/rds`
 
@@ -41,7 +41,7 @@
       `port`, `tags`
 - [x] 3.3 Outputs: `address` (host puro), `port`, `db_name`, `endpoint`, `arn`,
       `identifier`; nada com a senha
-- [ ] 3.4 Gerar `modules/rds/README.md` com terraform-docs
+- [x] 3.4 Gerar `modules/rds/README.md` com terraform-docs
 
 ## 4. Modulo `modules/elasticache`
 
@@ -51,7 +51,7 @@
       `engine_version`, `node_type` (default `cache.t4g.micro`), `num_cache_nodes`
       (default 1), `port` (default 6379), `tags`
 - [x] 4.3 Outputs: `address` (de `cache_nodes[0].address`), `port`, `arn`, `cluster_id`
-- [ ] 4.4 Gerar `modules/elasticache/README.md` com terraform-docs
+- [x] 4.4 Gerar `modules/elasticache/README.md` com terraform-docs
 
 ## 5. Fiacao na raiz
 
@@ -88,7 +88,7 @@
 - [x] 6.3 Atualizar `README.md` (diagrama, tabela de modulos, tabela de arquivos com
       `datastores.tf`) e `CLAUDE.md` (bullet sobre onde vivem os dados e o teto de
       politicas ja consolidado)
-- [ ] 6.4 Regenerar as tabelas do README raiz e dos modulos novos com terraform-docs
+- [x] 6.4 Regenerar as tabelas do README raiz e dos modulos novos com terraform-docs
 
 ## 7. Verificacao
 

@@ -309,9 +309,13 @@ module "iam_terraform" {
         "rds:RemoveTagsFromResource",
         "rds:ListTagsForResource",
 
-        "elasticache:CreateCacheCluster",
-        "elasticache:DeleteCacheCluster",
-        "elasticache:ModifyCacheCluster",
+        # O cache e um replication group de um no so (unico jeito de usar Valkey);
+        # as acoes de cache cluster ficam porque a AWS cria o no por baixo e as
+        # chamadas de Describe passam por ele.
+        "elasticache:CreateReplicationGroup",
+        "elasticache:DeleteReplicationGroup",
+        "elasticache:ModifyReplicationGroup",
+        "elasticache:DescribeReplicationGroups",
         "elasticache:DescribeCacheClusters",
         "elasticache:CreateCacheSubnetGroup",
         "elasticache:DeleteCacheSubnetGroup",
@@ -325,6 +329,7 @@ module "iam_terraform" {
       resources = [
         "arn:aws:rds:*:${local.account_id}:db:${var.name}*",
         "arn:aws:rds:*:${local.account_id}:subgrp:${var.name}*",
+        "arn:aws:elasticache:*:${local.account_id}:replicationgroup:${var.name}*",
         "arn:aws:elasticache:*:${local.account_id}:cluster:${var.name}*",
         "arn:aws:elasticache:*:${local.account_id}:subnetgroup:${var.name}*",
       ]

@@ -85,11 +85,14 @@ patch fica com a AWS e nao vira diff no plan a cada release.
 Output `endpoint` entrega host sem porta (`address`) alem do endpoint completo — o app
 espera `DB_HOST` e `DB_PORT` separados.
 
-### 4. `modules/elasticache` — no unico com `aws_elasticache_cluster`
+### 4. `modules/elasticache` — no unico em `aws_elasticache_replication_group`
 
-`aws_elasticache_cluster` com `num_cache_nodes = 1`, nao `aws_elasticache_replication_group`:
-sem replica, sem failover e sem grupo, e o recurso mais simples que entrega o cache mais
-barato. Engine `valkey` (compativel com o protocolo Redis e com o cliente `go-redis`), tipo
+Replication group com `num_cache_clusters = 1` e failover desligado. A primeira versao
+usava `aws_elasticache_cluster`, mais simples, e o plan parou em
+`expected engine to be one of ["memcached" "redis"]`: o recurso de cluster nao aceita
+Valkey nem no provider 6.60. Como Valkey custa ~20% menos por no que Redis OSS, o grupo
+de um no sai mais barato que o cluster com `redis` — e o app nao ve diferenca. Engine
+`valkey` (compativel com o protocolo Redis e com o cliente `go-redis`), tipo
 `cache.t4g.micro`, `transit_encryption_enabled = false` e sem auth token — o app conecta
 com `REDIS_TLS=false` e `REDIS_PASSWORD` vazio, sem mudanca de codigo.
 
@@ -97,7 +100,7 @@ O isolamento vem da rede (subnets privadas + security group so com origem nas ta
 de senha. Alternativa descartada: TLS + auth token, que exigiria `REDIS_TLS=true` e um
 segredo a mais para um cache que so e alcancavel de dentro da VPC.
 
-Output `address` entrega `cache_nodes[0].address` — de novo host e porta separados.
+Output `address` entrega `primary_endpoint_address` — de novo host e porta separados.
 
 ### 5. `modules/ssm-parameter` — modulo fino
 
@@ -137,9 +140,9 @@ nao sai enquanto houver subnet group ou ENI de banco. Segue o mesmo criterio do 
 - **`db.t4g.micro` e `cache.t4g.micro` sao burstable** → sob carga sustentada os creditos
   de CPU acabam e a latencia sobe. Aceito: e ambiente de projeto pessoal, e a classe e
   input do modulo.
-- **`aws_elasticache_cluster` com engine `valkey`** exige provider AWS recente; o root fixa
-  `~> 6.0`, que atende. Se der incompatibilidade, cair para `engine = "redis"` e a mesma
-  classe de no, sem impacto no app.
+- **Valkey so existe em replication group** → confirmado no provider 6.60
+  (`aws_elasticache_cluster` valida `engine` contra `memcached`/`redis`). Se uma versao
+  futura mudar isso, trocar de recurso recria o cache — que e aceitavel, ele nasce vazio.
 
 ## Migration Plan
 
