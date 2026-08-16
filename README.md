@@ -1,8 +1,9 @@
 # urlshortener — infraestrutura
 
 Terraform da infraestrutura do encurtador de URLs na AWS: VPC com subnets publicas
-e privadas, ALB internet-facing, aplicacao em ECS Fargate, repositorio ECR e as
-roles do GitHub Actions via OIDC (sem access key de longa duracao).
+e privadas, ALB internet-facing, aplicacao em ECS Fargate, Postgres no RDS, cache no
+ElastiCache, repositorio ECR e as roles do GitHub Actions via OIDC (sem access key de
+longa duracao).
 
 ```
                    internet
@@ -16,8 +17,13 @@ roles do GitHub Actions via OIDC (sem access key de longa duracao).
         │       ┌──────────┐        │
         │       │ app      │        │   1 a 4 tasks (autoscaling por CPU)
         │       │ :8080    │        │
-        │       └────┬─────┘        │
-        └────────────┼──────────────┘
+        │       └──┬───┬───┘        │
+        └──────────┼───┼────────────┘
+                   │   │            subnets privadas
+        ┌──────────▼┐ ┌▼───────────┐
+        │ RDS       │ │ ElastiCache│  db.t4g.micro / cache.t4g.micro
+        │ Postgres  │ │ Valkey     │  1 no, Single-AZ
+        └───────────┘ └────────────┘
                      │ NAT gateway
              ECR / CloudWatch Logs / SSM
 ```
@@ -32,6 +38,7 @@ roles do GitHub Actions via OIDC (sem access key de longa duracao).
 | `ecr.tf` | repositorio de imagens |
 | `iam.tf` | provider OIDC e as roles do GitHub Actions |
 | `app.tf` | security groups, ALB e servico ECS da aplicacao |
+| `datastores.tf` | RDS, ElastiCache, os security groups deles e os segredos no SSM |
 | `moved.tf` | renomeacoes de modulo pendentes de apply (temporario) |
 | `environments/` | tfvars e backend config por ambiente |
 | `modules/` | modulos reusaveis, cada um com seu README |
@@ -49,6 +56,9 @@ e organizacional e nao afeta o state.
 | [elb](modules/elb) | ALB, target group e listeners |
 | [ecs](modules/ecs) | cluster/servico Fargate, task definition, roles e autoscaling |
 | [ecr](modules/ecr) | repositorio de imagens com scan on push |
+| [rds](modules/rds) | instancia Postgres com subnet group, no perfil mais barato |
+| [elasticache](modules/elasticache) | cache Valkey/Redis de no unico |
+| [ssm-parameter](modules/ssm-parameter) | parametro (SecureString) para segredo da aplicacao |
 | [github-oidc](modules/github-oidc) | provider OIDC do GitHub (um por conta) |
 | [iam](modules/iam) | role com trust policy e policies parametrizadas |
 
@@ -92,6 +102,22 @@ correspondente com uma `key` propria e rode o `init` apontando para ele.
 sizing, portas). O que e `sensitive` — `app_repository` e `terraform_repository` —
 fica nos secrets do GitHub e chega como `TF_VAR_*`. O `terraform.tfvars` na raiz
 continua ignorado pelo git e serve para sobrescritas locais.
+
+## Dados e segredos
+
+Postgres e Valkey ficam nas subnets privadas, cada um com security group proprio que
+so aceita a origem das tasks — nenhum dos dois tem endereco publico
+([ADR-0015](docs/adr/0015-dados-gerenciados-na-vpc.md)). O dimensionamento e o mais
+barato que funciona: `db.t4g.micro` com 20 GB gp3 Single-AZ e um no
+`cache.t4g.micro`, ambos ajustaveis por tfvars.
+
+A senha do banco e o `JWT_SECRET` nascem de `random_password` e vao para o Parameter
+Store como `SecureString`. A task definition guarda o **ARN** do parametro, nunca o
+valor; o ECS resolve o segredo na partida da task. Os dois valores tambem ficam no
+state — o bucket e privado e versionado.
+
+O banco sobe **sem schema**: `/health` responde, mas as rotas de API falham ate
+`cmd/migrate` (no repositorio da aplicacao) rodar contra ele.
 
 ## Deploy da aplicacao
 
@@ -163,36 +189,50 @@ terraform-docs markdown table --config .terraform-docs.yml modules/<modulo>
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | terraform | >= 1.0.0 |
 | aws | ~> 6.0 |
+| random | ~> 3.0 |
 
 ## Providers
 
-No providers.
+| Name | Version |
+| ---- | ------- |
+| aws | 6.56.0 |
+| random | ~> 3.0 |
 
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | alb | ./modules/elb | n/a |
 | ecr | ./modules/ecr | n/a |
 | ecs\_app | ./modules/ecs | n/a |
 | github\_oidc | ./modules/github-oidc | n/a |
 | iam\_app | ./modules/iam | n/a |
 | iam\_terraform | ./modules/iam | n/a |
+| rds | ./modules/rds | n/a |
+| redis | ./modules/elasticache | n/a |
 | sg\_alb | ./modules/security-group | n/a |
 | sg\_ecs\_tasks | ./modules/security-group | n/a |
+| sg\_rds | ./modules/security-group | n/a |
+| sg\_redis | ./modules/security-group | n/a |
+| ssm\_db\_password | ./modules/ssm-parameter | n/a |
+| ssm\_jwt\_secret | ./modules/ssm-parameter | n/a |
 | vpc | ./modules/vpc | n/a |
 
 ## Resources
 
-No resources.
+| Name | Type |
+| ---- | ---- |
+| [random_password.db](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
+| [random_password.jwt](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
+| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | app\_repository | Repo da aplicacao, formato owner@ownerid/repo@repoid. | `string` | n/a | yes |
 | name | Prefixo de todos os recursos do stack. Distingue os ambientes entre si. | `string` | n/a | yes |
 | terraform\_repository | Repo da pipeline de infraestrutura, formato owner@ownerid/repo@repoid. | `string` | n/a | yes |
@@ -204,8 +244,17 @@ No resources.
 | app\_max\_capacity | Teto de tasks do autoscaling. | `number` | `4` | no |
 | app\_memory | Memoria da task em MiB. | `number` | `512` | no |
 | app\_port | Porta em que o container do encurtador escuta. Alvo do target group do ALB. | `number` | `8080` | no |
+| db\_allocated\_storage | Storage do RDS em GB (minimo 20 no gp3). | `number` | `20` | no |
+| db\_engine\_version | Versao major do Postgres; o patch fica com a AWS. | `string` | `"17"` | no |
+| db\_instance\_class | Classe da instancia RDS. O default e a burstable mais barata. | `string` | `"db.t4g.micro"` | no |
+| db\_name | Nome do banco criado na instancia RDS. | `string` | `"urlshortener"` | no |
+| db\_port | Porta do Postgres. | `number` | `5432` | no |
+| db\_username | Usuario master do Postgres. A senha e gerada pelo Terraform. | `string` | `"postgres"` | no |
 | github\_subjects | Refs autorizadas a assumir a role, sufixo do claim `sub` do OIDC.<br/>Exemplos: "ref:refs/heads/main", "environment:prod", "pull\_request". | `list(string)` | <pre>[<br/>  "ref:refs/heads/main"<br/>]</pre> | no |
 | github\_subjects\_terraform | Refs autorizadas na role de infraestrutura. | `list(string)` | <pre>[<br/>  "ref:refs/heads/main"<br/>]</pre> | no |
+| redis\_engine\_version | Versao da engine do cache (valkey). | `string` | `"8.0"` | no |
+| redis\_node\_type | Tipo do no do ElastiCache. O default e o menor disponivel. | `string` | `"cache.t4g.micro"` | no |
+| redis\_port | Porta do cache. | `number` | `6379` | no |
 | region | Regiao AWS do stack. | `string` | `"us-east-1"` | no |
 | single\_nat\_gateway | Com true, um unico NAT gateway atende todas as subnets privadas: mais barato e<br/>ponto unico de falha. Com false, sai um NAT por AZ. | `bool` | `true` | no |
 | subnet\_count | Quantidade de subnets por tier: N publicas e N privadas. | `number` | `3` | no |
@@ -213,7 +262,7 @@ No resources.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | alb\_dns\_name | DNS publico do ALB — ponto de entrada da aplicacao |
 | alb\_target\_group\_arn | Target group a ser referenciado pelo aws\_ecs\_service |
 | ecr\_repository\_url | URL do repositorio ECR — destino do docker push |
@@ -223,6 +272,9 @@ No resources.
 | ecs\_service\_name | Servico ECS do encurtador |
 | ecs\_task\_definition\_family | Familia da task definition — base das revisoes publicadas pela pipeline |
 | iam\_app\_role\_arn | Role assumida pelo GitHub Actions da aplicacao |
+| rds\_db\_name | Nome do banco criado na instancia |
+| rds\_endpoint | Endpoint do Postgres no formato host:porta |
+| redis\_address | Host do cache — o que a aplicacao recebe em REDIS\_URL |
 | terraform\_role\_arn | Role assumida pela pipeline de infraestrutura |
 | vpc\_id | ID da VPC |
 <!-- END_TF_DOCS -->

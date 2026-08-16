@@ -6,6 +6,13 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 6.0"
     }
+
+    # Gera as senhas que nao podem existir em tfvars versionado. O valor vive no
+    # state, entao trocar de backend leva os segredos junto.
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
   }
 
   # Backend parcial: a `key` vem de environments/<env>.backend.hcl, para cada

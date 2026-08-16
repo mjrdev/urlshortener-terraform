@@ -40,3 +40,24 @@ app_desired_count = 1
 # o default do root). O terraform.tfvars local dizia 2 — se 2 for a intencao,
 # mudar aqui vira uma alteracao deliberada, visivel no plan.
 app_max_capacity = 4
+
+##########################
+# Banco de dados
+##########################
+
+# Perfil de custo minimo: burstable menor, storage minimo do gp3 e Single-AZ (o
+# modulo ja tem Multi-AZ e Performance Insights desligados por padrao).
+db_name           = "urlshortener"
+db_username       = "postgres"
+db_engine_version = "17"
+
+db_instance_class    = "db.t4g.micro"
+db_allocated_storage = 20
+
+##########################
+# Cache
+##########################
+
+# No unico, sem replica e sem TLS — o isolamento vem do security group.
+redis_node_type      = "cache.t4g.micro"
+redis_engine_version = "8.0"

@@ -34,14 +34,14 @@ module "sg_alb" {
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | terraform | >= 1.0.0 |
 | aws | >= 6.0 |
 
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | aws | >= 6.0 |
 
 ## Modules
@@ -51,7 +51,7 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [aws_security_group.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_vpc_security_group_egress_rule.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
@@ -59,7 +59,7 @@ No modules.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | name | Nome do security group. Tambem prefixa o nome das regras criadas. | `string` | n/a | yes |
 | vpc\_id | Id VPC | `string` | n/a | yes |
 | description | Descricao do security group. | `string` | `null` | no |
@@ -70,7 +70,7 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | arn | ARN do security group. |
 | egress\_rule\_ids | Ids das regras de saida, por nome logico. |
 | id | Id do security group. |

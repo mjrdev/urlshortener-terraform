@@ -21,3 +21,13 @@ app_cpu           = 256
 app_memory        = 512
 app_desired_count = 1
 app_max_capacity  = 2
+
+db_name           = "urlshortener"
+db_username       = "postgres"
+db_engine_version = "17"
+
+db_instance_class    = "db.t4g.micro"
+db_allocated_storage = 20
+
+redis_node_type      = "cache.t4g.micro"
+redis_engine_version = "8.0"

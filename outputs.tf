@@ -64,3 +64,24 @@ output "ecs_log_group_name" {
   description = "Log group com a saida dos containers"
   value       = module.ecs_app.log_group_name
 }
+
+##########################
+# Dados
+##########################
+
+# Nenhuma senha sai daqui: a do banco vive so no state e no parametro do SSM.
+
+output "rds_endpoint" {
+  description = "Endpoint do Postgres no formato host:porta"
+  value       = module.rds.endpoint
+}
+
+output "rds_db_name" {
+  description = "Nome do banco criado na instancia"
+  value       = module.rds.db_name
+}
+
+output "redis_address" {
+  description = "Host do cache — o que a aplicacao recebe em REDIS_URL"
+  value       = module.redis.address
+}

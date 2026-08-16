@@ -106,8 +106,33 @@ module "ecs_app" {
   cpu    = var.app_cpu
   memory = var.app_memory
 
+  # A imagem nao carrega arquivo de ambiente: tudo o que o processo le no boot
+  # entra aqui. Endpoints saem dos proprios modulos, entao recriar banco ou cache
+  # atualiza a configuracao sozinho.
   environment = {
     PORT = tostring(var.app_port)
+
+    DB_HOST = module.rds.address
+    DB_PORT = tostring(module.rds.port)
+    DB_USER = var.db_username
+    DB_NAME = module.rds.db_name
+    # O Postgres 17 recusa conexao sem TLS por padrao; `require` cifra sem exigir
+    # bundle de CA dentro da imagem.
+    DB_SSLMODE = "require"
+
+    # O cliente monta o endereco como REDIS_URL:REDIS_PORT, entao aqui vai o host
+    # puro. Sem TLS e sem senha: o cache so e alcancavel de dentro da VPC.
+    REDIS_URL  = module.redis.address
+    REDIS_PORT = tostring(module.redis.port)
+    REDIS_TLS  = "false"
+  }
+
+  # Referencia ao parametro, nunca o valor: o segredo nao aparece na task
+  # definition. O modulo cria sozinho a policy que autoriza a role de execucao a
+  # ler exatamente estes dois ARNs.
+  secrets = {
+    DB_PASSWORD = module.ssm_db_password.arn
+    JWT_SECRET  = module.ssm_jwt_secret.arn
   }
 
   target_group_arn = module.alb.target_group_arn

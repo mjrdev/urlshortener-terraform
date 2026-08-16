@@ -88,6 +88,68 @@ variable "app_max_capacity" {
 }
 
 ##########################
+# Banco de dados
+##########################
+
+variable "db_name" {
+  description = "Nome do banco criado na instancia RDS."
+  type        = string
+  default     = "urlshortener"
+}
+
+variable "db_username" {
+  description = "Usuario master do Postgres. A senha e gerada pelo Terraform."
+  type        = string
+  default     = "postgres"
+}
+
+variable "db_port" {
+  description = "Porta do Postgres."
+  type        = number
+  default     = 5432
+}
+
+variable "db_engine_version" {
+  description = "Versao major do Postgres; o patch fica com a AWS."
+  type        = string
+  default     = "17"
+}
+
+variable "db_instance_class" {
+  description = "Classe da instancia RDS. O default e a burstable mais barata."
+  type        = string
+  default     = "db.t4g.micro"
+}
+
+variable "db_allocated_storage" {
+  description = "Storage do RDS em GB (minimo 20 no gp3)."
+  type        = number
+  default     = 20
+}
+
+##########################
+# Cache
+##########################
+
+variable "redis_node_type" {
+  description = "Tipo do no do ElastiCache. O default e o menor disponivel."
+  type        = string
+  default     = "cache.t4g.micro"
+}
+
+variable "redis_engine_version" {
+  description = "Versao da engine do cache (valkey)."
+  type        = string
+  default     = "8.0"
+}
+
+variable "redis_port" {
+  description = "Porta do cache."
+  type        = number
+  default     = 6379
+}
+
+##########################
 # GitHub Actions / OIDC
 ##########################
 
