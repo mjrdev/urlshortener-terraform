@@ -16,7 +16,7 @@
       da conta. Nao incluir `ssm:DescribeParameters` (listagem, exigiria `"*"`)
 - [x] 1.4 Confirmar que `module.iam_terraform` continua com no maximo 10 entradas em
       `policies` e rodar `terraform validate`
-- [ ] 1.5 Aplicar so este passo (`terraform apply -target=module.iam_terraform`) antes de
+- [x] 1.5 Aplicar so este passo (`terraform apply -target=module.iam_terraform`) antes de
       seguir — o resto do plano depende dele
 
 ## 2. Modulo `modules/ssm-parameter`
@@ -93,10 +93,10 @@
 ## 7. Verificacao
 
 - [x] 7.1 `terraform fmt -recursive` e `terraform validate` limpos
-- [ ] 7.2 `terraform plan -var-file=environments/prod.tfvars` mostrando so os recursos
+- [x] 7.2 `terraform plan -var-file=environments/prod.tfvars` mostrando so os recursos
       novos, a revisao nova da task definition e as politicas consolidadas — nenhum toque
       em VPC, ALB ou no servico ECS
-- [ ] 7.3 Apply e conferencia: instancia RDS `available`, cluster de cache disponivel,
+- [x] 7.3 Apply e conferencia: instancia RDS `available`, cluster de cache disponivel,
       parametros presentes com `type = SecureString`
 - [ ] 7.4 Disparar a pipeline do app e confirmar que a task nova sobe com a revisao que
       carrega `environment` e `secrets`, que o alvo do ALB fica `healthy` e que o log do
