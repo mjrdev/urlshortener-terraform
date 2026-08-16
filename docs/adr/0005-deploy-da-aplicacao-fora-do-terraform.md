@@ -33,6 +33,28 @@ lifecycle {
 Tudo o mais do servico — rede, security groups, roles, log group, autoscaling,
 circuit breaker, target group — continua sendo do Terraform.
 
+## Como a pipeline do app promove uma versao
+
+Roda no repositorio da aplicacao, assumindo por OIDC a role do output
+`iam_app_role_arn` (`module.iam_app`):
+
+1. Build e push da imagem no ECR **com o SHA do commit como tag**. `latest` pode
+   continuar existindo, mas o deploy aponta para o SHA: e o que torna a revisao
+   rastreavel e o rollback trivial (reapontar para a revisao anterior).
+2. `aws ecs describe-task-definition --task-definition <family>` — pega a revisao
+   ativa como base.
+3. Troca `containerDefinitions[].image` do container `<container_name>` e registra
+   a revisao nova com `aws ecs register-task-definition`.
+4. `aws ecs update-service --cluster <cluster> --service <service>
+   --task-definition <revisao nova>`.
+5. `aws ecs wait services-stable`. Se a task nova nao subir, o
+   `deployment_circuit_breaker` (`rollback = true`) devolve a revisao anterior
+   sozinho.
+
+Os nomes de cluster, servico, familia e container saem dos outputs do root:
+`ecs_cluster_name`, `ecs_service_name`, `ecs_task_definition_family`,
+`ecs_container_name` e `ecr_repository_url`.
+
 ## Alternativas consideradas
 
 - **Terraform como responsavel pelo deploy** (`app_image_tag` sendo a fonte da
@@ -55,6 +77,10 @@ circuit breaker, target group — continua sendo do Terraform.
   pelo Terraform, mas **o servico so passa a usa-la no proximo deploy da
   aplicacao**, porque `task_definition` esta em `ignore_changes`. Para aplicar na
   hora, e preciso forcar o update do servico fora do Terraform.
-- A role `module.iam_app` existe exatamente para essa pipeline e tem permissao de
-  push no ECR — nada de infraestrutura
-  ([ADR-0006](0006-autenticacao-da-ci-via-github-oidc.md)).
+- A role `module.iam_app` existe exatamente para essa pipeline: push no ECR mais o
+  minimo de ECS para registrar a revisao e atualizar o servico — nada de
+  infraestrutura ([ADR-0006](0006-autenticacao-da-ci-via-github-oidc.md)).
+- **`module.iam_app` e a fronteira de permissao desse fluxo.** Como em
+  `iam_terraform`, a politica lista so as acoes que o deploy realmente chama:
+  mudanca no fluxo (blue/green pelo CodeDeploy, leitura de segredos, ECS Exec)
+  exige acao nova em `iam.tf`, senao a pipeline do app para com `AccessDenied`.

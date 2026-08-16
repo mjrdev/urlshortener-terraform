@@ -82,6 +82,41 @@ module "iam_app" {
       ]
       resources = [module.ecr.repository_arn]
     }
+
+    # O deploy da aplicacao e desta pipeline, nao do Terraform (ADR-0005): ela
+    # registra a revisao nova da task definition e aponta o servico para ela.
+    ecs-service = {
+      actions = [
+        "ecs:DescribeServices",
+        "ecs:UpdateService",
+      ]
+
+      # Cluster e servico nascem os dois de "${var.name}-ecs" (ver app.tf), entao
+      # o ARN de servico repete o prefixo nas duas posicoes.
+      resources = ["arn:aws:ecs:*:${local.account_id}:service/${var.name}*/${var.name}*"]
+    }
+
+    # Nenhuma das tres aceita resource-level na AWS — `RegisterTaskDefinition` cria
+    # o recurso, entao nunca ha ARN para casar. Escopo aqui vem da lista de acoes.
+    ecs-task-definition = {
+      actions = [
+        "ecs:RegisterTaskDefinition",
+        "ecs:DescribeTaskDefinition",
+        "ecs:ListTaskDefinitions",
+      ]
+      resources = ["*"]
+    }
+
+    # `RegisterTaskDefinition` passa as roles de execucao e de task, e isso exige
+    # `iam:PassRole`. Entrada separada de proposito: `modules/iam` gera um statement
+    # por chave do mapa, entao juntar com a entrada de `"*"` acima soltaria o
+    # PassRole para a conta inteira. `modules/iam` nao aceita condicoes em
+    # `policies`, entao nao da para amarrar `iam:PassedToService`; o escopo e o
+    # prefixo do projeto, o mesmo de iam_terraform.
+    ecs-pass-role = {
+      actions   = ["iam:PassRole"]
+      resources = [local.iam_scope]
+    }
   }
 }
 

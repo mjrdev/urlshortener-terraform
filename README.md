@@ -93,11 +93,55 @@ sizing, portas). O que e `sensitive` — `app_repository` e `terraform_repositor
 fica nos secrets do GitHub e chega como `TF_VAR_*`. O `terraform.tfvars` na raiz
 continua ignorado pelo git e serve para sobrescritas locais.
 
+## Deploy da aplicacao
+
+**O Terraform nao faz deploy** ([ADR-0005](docs/adr/0005-deploy-da-aplicacao-fora-do-terraform.md)):
+o `aws_ecs_service` tem `ignore_changes = [task_definition, desired_count]`. Mudar
+`app_image_tag` no tfvars **nao promove versao nenhuma** — a tag so vale para a
+primeira revisao da task definition. Quem promove e a pipeline da aplicacao, no
+repositorio do app, assumindo a role do output `iam_app_role_arn`:
+
+```bash
+CLUSTER=$(terraform output -raw ecs_cluster_name)
+SERVICE=$(terraform output -raw ecs_service_name)
+FAMILY=$(terraform output -raw ecs_task_definition_family)
+CONTAINER=$(terraform output -raw ecs_container_name)
+IMAGE="$(terraform output -raw ecr_repository_url):$GITHUB_SHA"
+
+# 1. build e push com o SHA do commit como tag (nao 'latest': o SHA e o que
+#    torna a revisao rastreavel e o rollback trivial)
+docker build -t "$IMAGE" . && docker push "$IMAGE"
+
+# 2. revisao ativa como base, com a imagem trocada
+aws ecs describe-task-definition --task-definition "$FAMILY" \
+  --query 'taskDefinition' \
+  | jq --arg img "$IMAGE" --arg name "$CONTAINER" '
+      .containerDefinitions |= map(if .name == $name then .image = $img else . end)
+      | del(.taskDefinitionArn, .revision, .status, .requiresAttributes,
+            .compatibilities, .registeredAt, .registeredBy)' > taskdef.json
+
+# 3. registra a revisao nova e aponta o servico para ela
+REVISION=$(aws ecs register-task-definition --cli-input-json file://taskdef.json \
+  --query 'taskDefinition.taskDefinitionArn' --output text)
+
+aws ecs update-service --cluster "$CLUSTER" --service "$SERVICE" \
+  --task-definition "$REVISION"
+
+aws ecs wait services-stable --cluster "$CLUSTER" --services "$SERVICE"
+```
+
+Se a task nova nao estabilizar, o `deployment_circuit_breaker` do servico volta
+sozinho para a revisao anterior. Mudanca em CPU, memoria, variaveis de ambiente ou
+secrets continua sendo do Terraform, mas so entra em producao no proximo deploy
+pela pipeline.
+
 ## CI
 
-- **`terraform.yaml`** — em PR e push na main: `fmt -check`, `validate`, `plan` e,
-  so em push na main, `apply` do plano salvo. `plan` e `apply` ficam no mesmo job:
-  o `tfplan` nao vira artifact porque exporia valores sensitive a quem baixasse.
+- **`terraform.yaml`** — em PR roda so `fmt -check` e `validate`, com
+  `init -backend=false`: sem state e sem credencial AWS. A role de infraestrutura
+  so e assumivel de `refs/heads/main`, entao um PR que falasse com a AWS falharia
+  sempre. `plan` e `apply` acontecem apenas no push na main, no mesmo job: o
+  `tfplan` nao vira artifact porque exporia valores sensitive a quem baixasse.
 - **`terraform-destroy.yaml`** — `workflow_dispatch` com confirmacao digitada.
   Destroi por `-target`, deixando de fora `module.github_oidc` e
   `module.iam_terraform`: os dois tem `prevent_destroy` e derrubar qualquer um
