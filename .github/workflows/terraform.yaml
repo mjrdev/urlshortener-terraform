@@ -16,6 +16,18 @@ on:
       - 'environments/**'
       - '.terraform.lock.hcl'
 
+  # Escotilha para o problema do ovo e da galinha: quando a mudanca **e** a
+  # permissao que o refresh precisa, o plan do run inteiro falha antes de chegar
+  # ao apply que corrigiria a role. Com `-target`, o Terraform so atualiza (e so
+  # refresca) o modulo indicado, e a permissao nova passa a valer para o run
+  # seguinte. Uso tipico: target = module.iam_terraform.
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Endereco de modulo para -target (vazio = stack inteiro)'
+        required: false
+        default: ''
+
 permissions:
   id-token: write
   contents: read
@@ -64,7 +76,9 @@ jobs:
     needs: validate
     # Plan e apply so na main: os dois precisam do state e da role, que o PR
     # nao tem. Em PR a validacao para no job acima.
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     steps:
       - name: Checkout repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -86,7 +100,12 @@ jobs:
 
       - name: Plan Terraform
         id: plan
-        run: terraform plan -input=false -no-color -var-file=environments/${{ env.TF_ENV }}.tfvars -out=tfplan
+        env:
+          TARGET: ${{ inputs.target && format('-target={0}', inputs.target) || '' }}
+        run: |
+          terraform plan -input=false -no-color \
+            -var-file=environments/${{ env.TF_ENV }}.tfvars \
+            $TARGET -out=tfplan
 
       # O apply roda no mesmo job de proposito. O plano salvo carrega em texto
       # claro os valores sensitive e os ARNs com o id da conta; em repositorio

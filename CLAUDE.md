@@ -120,6 +120,9 @@ Pontos que se aprendem lendo varios arquivos:
   `plan` e `apply` so em push na main. `TF_ENV: prod` fixo. `plan` e `apply` moram no
   mesmo job e o `tfplan` nunca sai do runner: como artifact, o plano vazaria os valores
   sensitive e os ARNs com o id da conta para qualquer um que baixasse o run.
+  O `workflow_dispatch` com input `target` existe para o caso ovo-e-galinha: mudanca
+  que da a permissao de que o refresh precisa nunca chega ao apply pelo caminho
+  normal. Rode com `module.iam_terraform` e depois o fluxo normal.
 - Actions de terceiros sao pinadas por **SHA de commit** com a tag no comentario (ADR-0014).
   Nao troque por tag movel; o Dependabot em `.github/dependabot.yml` cuida da atualizacao.
 - `.github/workflows/terraform-destroy.yaml` — `workflow_dispatch` com a palavra `destroy`
