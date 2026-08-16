@@ -182,3 +182,5 @@ No resources.
 | terraform\_role\_arn | Role assumida pela pipeline de infraestrutura |
 | vpc\_id | ID da VPC |
 <!-- END_TF_DOCS -->
+
+.
