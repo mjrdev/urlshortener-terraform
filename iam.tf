@@ -149,7 +149,9 @@ module "iam_terraform" {
   #
   # Limite da AWS: 10 politicas gerenciadas por role. Hoje sao 10 — o teto. Acao
   # nova entra numa entrada existente; entrada nova exige juntar duas ou pedir
-  # aumento de quota.
+  # aumento de quota. `compute` ja e o resultado disso: ECS, ELB e autoscaling
+  # foram fundidos para abrir espaco a `data-stores` e `ssm`. Fundir so vale entre
+  # entradas que ja compartilham o mesmo `resources`.
   policies = {
     # ARNs de rede sao atribuidos na criacao, entao a maioria das acoes de EC2 nao
     # aceita resource-level: o escopo aqui vem da lista de acoes, nao do recurso.
@@ -214,7 +216,12 @@ module "iam_terraform" {
       resources = ["arn:aws:ecr:*:${local.account_id}:repository/${var.name}*"]
     }
 
-    ecs = {
+    # ECS, ELB e Application Auto Scaling numa entrada so. As tres ja usavam
+    # `resources = ["*"]` — nenhuma delas aceita resource-level nas acoes de
+    # criacao —, entao juntar nao afrouxa nada: o escopo sempre veio da lista de
+    # acoes. O que a uniao compra e slot: a role esta no teto de 10 politicas e os
+    # dados gerenciados (`data-stores`, `ssm`) precisavam de dois.
+    compute = {
       actions = [
         "ecs:CreateCluster",
         "ecs:DeleteCluster",
@@ -233,12 +240,7 @@ module "iam_terraform" {
         "ecs:TagResource",
         "ecs:UntagResource",
         "ecs:ListTagsForResource",
-      ]
-      resources = ["*"]
-    }
 
-    elb = {
-      actions = [
         "elasticloadbalancing:CreateLoadBalancer",
         "elasticloadbalancing:DeleteLoadBalancer",
         "elasticloadbalancing:ModifyLoadBalancerAttributes",
@@ -254,6 +256,15 @@ module "iam_terraform" {
         "elasticloadbalancing:Describe*",
         "elasticloadbalancing:AddTags",
         "elasticloadbalancing:RemoveTags",
+
+        "application-autoscaling:RegisterScalableTarget",
+        "application-autoscaling:DeregisterScalableTarget",
+        "application-autoscaling:DescribeScalableTargets",
+        "application-autoscaling:PutScalingPolicy",
+        "application-autoscaling:DeleteScalingPolicy",
+        "application-autoscaling:DescribeScalingPolicies",
+        "application-autoscaling:ListTagsForResource",
+        "application-autoscaling:TagResource",
       ]
       resources = ["*"]
     }
@@ -281,18 +292,66 @@ module "iam_terraform" {
       ]
     }
 
-    autoscaling = {
+    # Postgres e Redis na mesma entrada, de novo por causa do teto de 10. Uma acao
+    # de RDS nunca autoriza sobre um ARN de ElastiCache (e vice-versa), entao a
+    # uniao das duas listas nao amplia o poder efetivo — so economiza um slot.
+    data-stores = {
       actions = [
-        "application-autoscaling:RegisterScalableTarget",
-        "application-autoscaling:DeregisterScalableTarget",
-        "application-autoscaling:DescribeScalableTargets",
-        "application-autoscaling:PutScalingPolicy",
-        "application-autoscaling:DeleteScalingPolicy",
-        "application-autoscaling:DescribeScalingPolicies",
-        "application-autoscaling:ListTagsForResource",
-        "application-autoscaling:TagResource",
+        "rds:CreateDBInstance",
+        "rds:DeleteDBInstance",
+        "rds:ModifyDBInstance",
+        "rds:DescribeDBInstances",
+        "rds:CreateDBSubnetGroup",
+        "rds:DeleteDBSubnetGroup",
+        "rds:ModifyDBSubnetGroup",
+        "rds:DescribeDBSubnetGroups",
+        "rds:AddTagsToResource",
+        "rds:RemoveTagsFromResource",
+        "rds:ListTagsForResource",
+
+        "elasticache:CreateCacheCluster",
+        "elasticache:DeleteCacheCluster",
+        "elasticache:ModifyCacheCluster",
+        "elasticache:DescribeCacheClusters",
+        "elasticache:CreateCacheSubnetGroup",
+        "elasticache:DeleteCacheSubnetGroup",
+        "elasticache:ModifyCacheSubnetGroup",
+        "elasticache:DescribeCacheSubnetGroups",
+        "elasticache:AddTagsToResource",
+        "elasticache:RemoveTagsFromResource",
+        "elasticache:ListTagsForResource",
       ]
-      resources = ["*"]
+
+      resources = [
+        "arn:aws:rds:*:${local.account_id}:db:${var.name}*",
+        "arn:aws:rds:*:${local.account_id}:subgrp:${var.name}*",
+        "arn:aws:elasticache:*:${local.account_id}:cluster:${var.name}*",
+        "arn:aws:elasticache:*:${local.account_id}:subnetgroup:${var.name}*",
+      ]
+    }
+
+    # Segredos da aplicacao como SecureString no Parameter Store (de graca no tier
+    # Standard). O `kms:Decrypt` e da chave gerenciada `alias/aws/ssm`: o Terraform
+    # le o parametro decriptado no refresh e essa chave delega a autorizacao ao
+    # IAM. `ssm:DescribeParameters` fica de fora de proposito — e listagem, so
+    # funcionaria com `"*"`, e o Terraform nao precisa dela.
+    ssm = {
+      actions = [
+        "ssm:PutParameter",
+        "ssm:GetParameter",
+        "ssm:GetParameters",
+        "ssm:DeleteParameter",
+        "ssm:AddTagsToResource",
+        "ssm:RemoveTagsFromResource",
+        "ssm:ListTagsForResource",
+        "kms:Decrypt",
+        "kms:DescribeKey",
+      ]
+
+      resources = [
+        "arn:aws:ssm:*:${local.account_id}:parameter/${var.name}/*",
+        "arn:aws:kms:*:${local.account_id}:key/*",
+      ]
     }
 
     # Politica separada de proposito: `modules/iam` gera um statement por entrada do

@@ -42,14 +42,14 @@ module "alb" {
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | terraform | >= 1.0.0 |
 | aws | >= 6.0 |
 
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | aws | >= 6.0 |
 
 ## Modules
@@ -59,7 +59,7 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [aws_lb.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb) | resource |
 | [aws_lb_listener.http](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
 | [aws_lb_listener.https](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
@@ -68,7 +68,7 @@ No modules.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | name | Nome do load balancer. Tambem prefixa target group e listeners. | `string` | n/a | yes |
 | security\_group\_ids | Security groups associados ao load balancer. | `list(string)` | n/a | yes |
 | subnets | Subnets do load balancer, ao menos duas em AZs diferentes. Publicas para ALB internet-facing. | `list(string)` | n/a | yes |
@@ -92,7 +92,7 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | arn | ARN do load balancer. |
 | dns\_name | DNS publico do load balancer — alvo do registro CNAME/alias. |
 | http\_listener\_arn | ARN do listener HTTP. |

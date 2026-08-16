@@ -50,14 +50,14 @@ module "ecs_app" {
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | terraform | >= 1.0.0 |
 | aws | >= 6.0 |
 
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | aws | >= 6.0 |
 
 ## Modules
@@ -67,7 +67,7 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [aws_appautoscaling_policy.cpu](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/appautoscaling_policy) | resource |
 | [aws_appautoscaling_policy.memory](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/appautoscaling_policy) | resource |
 | [aws_appautoscaling_target.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/appautoscaling_target) | resource |
@@ -90,7 +90,7 @@ No modules.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | image | Imagem do container, incluindo a tag (ex.: <conta>.dkr.ecr.us-east-1.amazonaws.com/app:v1). | `string` | n/a | yes |
 | name | Nome do cluster, do servico e da familia da task definition. | `string` | n/a | yes |
 | region | Regiao usada na configuracao do driver awslogs. | `string` | n/a | yes |
@@ -125,7 +125,7 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | cluster\_arn | ARN do cluster ECS, criado pelo modulo ou recebido em cluster\_arn. |
 | cluster\_name | Nome do cluster — usado no `aws ecs update-service` do deploy. |
 | container\_name | Nome do container — exigido pelo `aws ecs deploy` e pelo mapeamento do target group. |

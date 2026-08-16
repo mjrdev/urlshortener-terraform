@@ -34,14 +34,14 @@ module "iam_app" {
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | terraform | >= 1.0.0 |
 | aws | >= 6.0 |
 
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | aws | >= 6.0 |
 
 ## Modules
@@ -51,7 +51,7 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [aws_iam_policy.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
 | [aws_iam_role.protected](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
@@ -63,7 +63,7 @@ No modules.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | name | Nome da role. Tambem prefixa o nome das politicas criadas. | `string` | n/a | yes |
 | trust\_statements | Statements da trust policy (quem pode assumir a role). Generico: serve para<br/>service principals, cross-account, OIDC ou SAML.<br/><br/>Exemplo de service principal:<br/>  [{ principals = [{ type = "Service", identifiers = ["ec2.amazonaws.com"] }] }]<br/><br/>Exemplo federado com condicoes:<br/>  [{<br/>    actions    = ["sts:AssumeRoleWithWebIdentity"]<br/>    principals = [{ type = "Federated", identifiers = [provider\_arn] }]<br/>    conditions = [{ test = "StringLike", variable = "...:sub", values = ["..."] }]<br/>  }] | <pre>list(object({<br/>    effect  = optional(string, "Allow")<br/>    actions = optional(list(string), ["sts:AssumeRole"])<br/>    principals = list(object({<br/>      type        = string<br/>      identifiers = list(string)<br/>    }))<br/>    conditions = optional(list(object({<br/>      test     = string<br/>      variable = string<br/>      values   = list(string)<br/>    })), [])<br/>  }))</pre> | n/a | yes |
 | description | Descricao da role. | `string` | `null` | no |
@@ -77,7 +77,7 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | assume\_role\_policy | JSON da trust policy gerada — util para inspecionar ou testar. |
 | policy\_arns | ARNs das politicas criadas, por nome logico. |
 | role\_arn | ARN da role. |

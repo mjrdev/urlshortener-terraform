@@ -27,14 +27,14 @@ module "vpc" {
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | terraform | >= 1.0.0 |
 | aws | >= 6.0 |
 
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | aws | >= 6.0 |
 
 ## Modules
@@ -44,7 +44,7 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [aws_eip.nat](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eip) | resource |
 | [aws_internet_gateway.main](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/internet_gateway) | resource |
 | [aws_nat_gateway.main](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/nat_gateway) | resource |
@@ -60,7 +60,7 @@ No modules.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | name | n/a | `string` | n/a | yes |
 | single\_nat\_gateway | true cria um unico NAT Gateway compartilhado; false cria um por AZ (alta disponibilidade, custo maior). | `bool` | `true` | no |
 | subnet\_count | Quantidade de subnets por tier. O mesmo valor cria N subnets publicas e N privadas. | `number` | `3` | no |
@@ -69,7 +69,7 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | availability\_zones | n/a |
 | nat\_gateway\_ids | n/a |
 | private\_subnet\_ids | n/a |

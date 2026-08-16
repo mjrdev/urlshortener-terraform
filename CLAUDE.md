@@ -74,7 +74,14 @@ Pontos que se aprendem lendo varios arquivos:
   input `policies` lista so as acoes que os modulos chamam de fato, entao **servico novo
   exige acao nova em `iam.tf`** — senao o apply para com `AccessDenied` no meio. O id da
   conta vem de `data.aws_caller_identity`, nunca literal: o repositorio e publico. Limite
-  da AWS de 10 politicas por role ja esta no teto.
+  da AWS de 10 politicas por role ja esta no teto — a entrada `compute` (ECS + ELB +
+  autoscaling) e o resultado de fundir tres entradas para abrir espaco. Fundir so vale
+  entre entradas que ja compartilham o mesmo `resources`.
+- **Dados em `datastores.tf`** (ADR-0015): RDS Postgres, ElastiCache Valkey, os security
+  groups dos dois e os segredos no SSM. Senha do banco e `JWT_SECRET` vem de
+  `random_password` e entram na task por `secrets` (ARN do parametro, nunca o valor) —
+  `modules/ecs` cria sozinho a policy de leitura. Os defaults sao os mais baratos que
+  funcionam; mudar porte e coisa de tfvars, nao de modulo.
 - **`prevent_destroy` e um input de modulo**, nao so um `lifecycle`. Em `modules/iam` e
   `modules/github-oidc` a flag alterna entre dois recursos gemeos (`this` sem protecao,
   `protected` com `lifecycle { prevent_destroy = true }`), e os outputs saem de um `one(concat(...))`.

@@ -54,6 +54,12 @@ jobs:
             -target=module.sg_ecs_tasks \
             -target=module.alb \
             -target=module.sg_alb \
+            -target=module.rds \
+            -target=module.sg_rds \
+            -target=module.redis \
+            -target=module.sg_redis \
+            -target=module.ssm_db_password \
+            -target=module.ssm_jwt_secret \
             -target=module.vpc \
             -target=module.ecr \
             -target=module.iam_app
