@@ -216,11 +216,13 @@ module "iam_terraform" {
       resources = ["arn:aws:ecr:*:${local.account_id}:repository/${var.name}*"]
     }
 
-    # ECS, ELB e Application Auto Scaling numa entrada so. As tres ja usavam
-    # `resources = ["*"]` — nenhuma delas aceita resource-level nas acoes de
-    # criacao —, entao juntar nao afrouxa nada: o escopo sempre veio da lista de
-    # acoes. O que a uniao compra e slot: a role esta no teto de 10 politicas e os
-    # dados gerenciados (`data-stores`, `ssm`) precisavam de dois.
+    # A entrada de tudo que a AWS nao avalia contra um ARN especifico. Comecou como
+    # ECS + ELB + autoscaling (as tres ja usavam `resources = ["*"]`, entao juntar
+    # nao afrouxou nada e liberou dois slots do teto de 10) e recebeu depois as
+    # leituras de RDS, ElastiCache e SSM pelo mesmo motivo.
+    #
+    # O criterio para entrar aqui e um so: a acao nao aceita resource-level. Acao
+    # que muda estado e aceita ARN vai para uma entrada escopada, sempre.
     compute = {
       actions = [
         "ecs:CreateCluster",
@@ -265,6 +267,15 @@ module "iam_terraform" {
         "application-autoscaling:DescribeScalingPolicies",
         "application-autoscaling:ListTagsForResource",
         "application-autoscaling:TagResource",
+
+        # Leituras de RDS, ElastiCache e SSM moram aqui pelo mesmo motivo: sao
+        # operacoes de listagem, avaliadas contra um ARN generico (`db:*`,
+        # `parameter/*`) que nenhum escopo por prefixo cobre. O provider chama as
+        # tres em todo refresh — com elas na entrada escopada, o plan para com
+        # AccessDenied so para *ler* o que ele mesmo criou. Sao read-only.
+        "rds:Describe*",
+        "elasticache:Describe*",
+        "ssm:DescribeParameters",
       ]
       resources = ["*"]
     }
@@ -300,46 +311,53 @@ module "iam_terraform" {
         "rds:CreateDBInstance",
         "rds:DeleteDBInstance",
         "rds:ModifyDBInstance",
-        "rds:DescribeDBInstances",
         "rds:CreateDBSubnetGroup",
         "rds:DeleteDBSubnetGroup",
         "rds:ModifyDBSubnetGroup",
-        "rds:DescribeDBSubnetGroups",
         "rds:AddTagsToResource",
         "rds:RemoveTagsFromResource",
         "rds:ListTagsForResource",
 
-        # O cache e um replication group de um no so (unico jeito de usar Valkey);
-        # as acoes de cache cluster ficam porque a AWS cria o no por baixo e as
-        # chamadas de Describe passam por ele.
+        # O cache e um replication group de um no so (unico jeito de usar Valkey).
         "elasticache:CreateReplicationGroup",
         "elasticache:DeleteReplicationGroup",
         "elasticache:ModifyReplicationGroup",
-        "elasticache:DescribeReplicationGroups",
-        "elasticache:DescribeCacheClusters",
         "elasticache:CreateCacheSubnetGroup",
         "elasticache:DeleteCacheSubnetGroup",
         "elasticache:ModifyCacheSubnetGroup",
-        "elasticache:DescribeCacheSubnetGroups",
         "elasticache:AddTagsToResource",
         "elasticache:RemoveTagsFromResource",
         "elasticache:ListTagsForResource",
       ]
 
+      # Os ARNs com prefixo sao os que interessam: e neles que Create/Delete/Modify
+      # de fato agem. Os quatro genericos no fim existem porque a AWS avalia uma
+      # criacao contra todos os tipos de recurso que ela toca de tabela — o
+      # `CreateReplicationGroup` bate em `parametergroup` (o default da engine) antes
+      # de bater no grupo. Nao afrouxam nada: nenhuma acao desta lista faz sentido
+      # sobre um parameter group ou um snapshot, entao a permissao ali e inerte.
       resources = [
         "arn:aws:rds:*:${local.account_id}:db:${var.name}*",
         "arn:aws:rds:*:${local.account_id}:subgrp:${var.name}*",
+        "arn:aws:rds:*:${local.account_id}:pg:*",
+        "arn:aws:rds:*:${local.account_id}:og:*",
+
         "arn:aws:elasticache:*:${local.account_id}:replicationgroup:${var.name}*",
         "arn:aws:elasticache:*:${local.account_id}:cluster:${var.name}*",
         "arn:aws:elasticache:*:${local.account_id}:subnetgroup:${var.name}*",
+        "arn:aws:elasticache:*:${local.account_id}:parametergroup:*",
+        "arn:aws:elasticache:*:${local.account_id}:securitygroup:*",
+        "arn:aws:elasticache:*:${local.account_id}:snapshot:*",
+        "arn:aws:elasticache:*:${local.account_id}:usergroup:*",
       ]
     }
 
     # Segredos da aplicacao como SecureString no Parameter Store (de graca no tier
     # Standard). O `kms:Decrypt` e da chave gerenciada `alias/aws/ssm`: o Terraform
     # le o parametro decriptado no refresh e essa chave delega a autorizacao ao
-    # IAM. `ssm:DescribeParameters` fica de fora de proposito — e listagem, so
-    # funcionaria com `"*"`, e o Terraform nao precisa dela.
+    # IAM. `ssm:DescribeParameters` nao esta aqui: o provider chama essa listagem
+    # para ler os metadados do parametro, e listagem so autoriza com `"*"` — por
+    # isso ela vive na entrada `compute`, junto com as outras leituras.
     ssm = {
       actions = [
         "ssm:PutParameter",
